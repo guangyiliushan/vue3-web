@@ -1,18 +1,17 @@
 <script setup lang="ts">
-
+import RouterBar from '@/components/RouterBar.vue'
 </script>
 
 <template>
   <nav>
-    <RouterLink to="/">Go to Home</RouterLink>
-    <RouterLink to="/about">Go to About</RouterLink>
+    <router-bar />
   </nav>
   <h1>Hello App!</h1>
   <p>
     <strong>Current route path:</strong> {{ $route.fullPath }}
   </p>
   <main>
-    <RouterView />
+    <RouterView  />
   </main>
 </template>
 

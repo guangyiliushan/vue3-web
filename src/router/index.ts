@@ -1,16 +1,23 @@
-import { createMemoryHistory, createRouter } from 'vue-router'
+import { createWebHistory, createRouter } from 'vue-router'
 
 import HomeView from '@/views/Home.vue'
 import AboutView from '@/views/About.vue'
+import DashboardView from '@/views/Dashboard.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: HomeView },
   { path: '/about',name: 'About' , component: AboutView },
+  { path: '/dashboard', name: 'Dashboard', component: DashboardView },
 ]
 
 const router = createRouter({
-  history: createMemoryHistory(),
+  history: createWebHistory(),
   routes,
 })
+
+// router.beforeEach((to, from, next) => {
+//   if (to.name !== 'Login') next({ name: 'Login' })
+//   else next()
+// })
 
 export default router
