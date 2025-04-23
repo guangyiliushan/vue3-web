@@ -5,6 +5,7 @@ import AboutView from '@/views/About.vue'
 import DashboardView from '@/views/Dashboard.vue'
 import LoginView from '@/views/Login.vue'
 import RegisterView from '@/views/Register.vue'
+import UserView from '@/views/User.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: HomeView },
@@ -12,6 +13,7 @@ const routes = [
   { path: '/dashboard', name: 'Dashboard', component: DashboardView },
   { path: '/login', name: 'Login', component: LoginView },
   { path: '/register', name: 'Register', component: RegisterView },
+  { path: '/user/:id', name: 'User', component: UserView },
 ]
 
 const router = createRouter({
