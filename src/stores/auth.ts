@@ -25,15 +25,15 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     async login(email: string, password: string) {
-      await http.post("/auth/login", { email, password });
+      await http.post("/user/login", { email, password });
       await this.fetchUser();
     },
     async logout() {
-      await http.post("/auth/logout");
+      await http.post("/user/logout");
       this.user = null;
     },
-    async register(email: string, password: string) {
-      await http.post("/auth/register", { email, password });
+    async register(email: string, password: string , salt: string) {
+      await http.post("/user/register", { email, password , salt});
       await this.fetchUser();
     },
   },

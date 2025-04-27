@@ -10,6 +10,8 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import CryptoJS from 'crypto-js';
+
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -18,10 +20,13 @@ const password = ref('');
 
 async function onSubmit() {
     try {
-        await auth.register( email.value, password.value);
+        const salt = CryptoJS.lib.WordArray.random(16).toString();
+        const saltedPassword = password.value + salt;
+        const encryptedPassword = CryptoJS.SHA256(saltedPassword).toString();
+        await auth.register(email.value, encryptedPassword, salt);
         router.push('/');
-    } catch {
-        alert('注册失败');
+    } catch( err ) {
+        alert('注册失败: ' + (err as Error).message);
     }
 }
 </script>
