@@ -18,7 +18,7 @@ export const useAuthStore = defineStore("auth", {
     async fetchUser() {
       this.loading = true;
       try {
-        const resp = await http.get<{ user: User | null }>("/auth/me");
+        const resp = await http.get<{ user: User | null }>("/user/auth");
         this.user = resp.data.user;
       } finally {
         this.loading = false;
@@ -33,8 +33,17 @@ export const useAuthStore = defineStore("auth", {
       this.user = null;
     },
     async register(email: string, password: string , salt: string) {
-      await http.post("/user/register", { email, password , salt});
-      await this.fetchUser();
+      try {
+        const resp = await http.post("/user/register", { email, password , salt });
+        // await this.fetchUser();
+        return resp.data;
+      } catch (err: any) {
+        // 如果后端有返回内容，抛出详细信息
+        if (err.response && err.response.data) {
+          throw err.response.data;
+        }
+        throw err;
+      }
     },
   },
 });
