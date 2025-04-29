@@ -3,6 +3,7 @@
         <input v-model="email" type="email" placeholder="邮箱" required />
         <input v-model="password" type="password" placeholder="密码" required />
         <button :disabled="auth.loading">注册</button>
+        <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
     </form>
 </template>
 
@@ -12,11 +13,11 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import CryptoJS from 'crypto-js';
 
-
 const auth = useAuthStore();
 const router = useRouter();
 const email = ref('');
 const password = ref('');
+const errorMessage = ref('');
 
 async function onSubmit() {
     try {
@@ -24,9 +25,9 @@ async function onSubmit() {
         const saltedPassword = password.value + salt;
         const encryptedPassword = CryptoJS.SHA256(saltedPassword).toString();
         await auth.register(email.value, encryptedPassword, salt);
-        router.push('/');
-    } catch( err ) {
-        alert('注册失败: ' + (err as Error).message);
+        router.push('/login');
+    } catch (err: any) {
+        errorMessage.value = err;
     }
 }
 </script>

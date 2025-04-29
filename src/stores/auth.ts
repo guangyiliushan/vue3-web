@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import http from "@/utils/http";
+import type { AxiosError } from 'axios';
 
 export interface User {
   id: string;
@@ -36,15 +37,20 @@ export const useAuthStore = defineStore("auth", {
       await http.post("/user/logout");
       this.user = null;
     },
-    async register(email: string, password: string , salt: string) {
+    async register(email: string, password: string, salt: string) {
       try {
-        const resp = await http.post("/user/register", { email, password , salt });
+        const resp = await http.post("/user/register", { email, password, salt });
         return resp.data;
       } catch (err: any) {
-        if (err.response && err.response.data) {
-          throw err.response.data;
+        const axiosError = err as AxiosError<{ error: string }>;
+        const { response } = axiosError;
+        if (response && response.data && response.data.error) {
+          throw response.data.error;
+        } else if (axiosError.message) {
+          throw axiosError.message;
+        } else {
+          throw "注册失败: 未知错误，请稍后重试。";
         }
-        throw err;
       }
     },
   },
