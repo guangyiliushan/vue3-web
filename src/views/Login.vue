@@ -24,9 +24,7 @@ async function onSubmit() {
   try {
     const salt = await auth.getSalt(email.value);
     const saltedPassword = password.value + salt;
-    console.log(saltedPassword);
     const encryptedPassword = CryptoJS.SHA256(saltedPassword).toString();
-    console.log(encryptedPassword);
     await auth.login(email.value, encryptedPassword);
     window.location.href = '/';
   } catch (err: any) {

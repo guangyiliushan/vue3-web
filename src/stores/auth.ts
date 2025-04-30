@@ -5,6 +5,8 @@ import type { AxiosError } from 'axios';
 export interface User {
   id: string;
   username: string;
+  email: string;
+  createdAt: string;
 }
 
 export const useAuthStore = defineStore("auth", {
@@ -19,7 +21,16 @@ export const useAuthStore = defineStore("auth", {
     async fetchUser() {
       this.loading = true;
       try {
-        const resp = await http.get<{ user: User | null }>("/user/auth");
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw "未找到认证令牌，请登录后重试。";
+        }
+        const resp = await http.get<{ user: User | null }>("/user/me", {
+          headers: {
+            Authorization: `${token}`,
+          },
+        });
+        console.log(resp.data.user);
         this.user = resp.data.user;
       } finally {
         this.loading = false;
@@ -44,7 +55,8 @@ export const useAuthStore = defineStore("auth", {
     async login(email: string, password: string) {
       try {
         const resp = await http.post("/user/login", { email, password });
-        console.log(resp);
+        localStorage.setItem("token", resp.data.token);
+        await this.fetchUser();
         return resp.data;
       } catch (err: any) {
         const axiosError = err as AxiosError<{ error: string }>;

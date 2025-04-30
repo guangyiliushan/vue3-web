@@ -5,8 +5,8 @@
       <RouterLink to="/about">About</RouterLink>
       <RouterLink to="/dashboard">Dashboard</RouterLink>
     </div>
-    <div v-if="isAuthenticated">
-      <RouterLink to="/dashboard">Dashboard</RouterLink>
+    <div v-if="auth.isAuthenticated">
+      <RouterLink to='/User/{:id}'>User</RouterLink>
     </div>
     <div v-else>
       <RouterLink to="/login">Login</RouterLink>
@@ -16,7 +16,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+// import { ref } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { watch } from 'vue';
 
-const isAuthenticated = ref(false);
+const auth = useAuthStore();
+
+watch(
+  () => auth.isAuthenticated,
+  id => {
+    console.log('isAuthenticated changed to:', id);
+  }
+);
+
 </script>
