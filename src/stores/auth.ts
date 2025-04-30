@@ -26,12 +26,37 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     async getSalt(email: string) {
-      await http.post("/user/salt", { email });
-      const resp = await http.get<{ salt: string }>("/user/salt");
-      return resp.data.salt;
+      try {
+        const resp = await http.post("/user/salt", { email });
+        return resp.data.salt;
+      } catch (err: any) {
+        const axiosError = err as AxiosError<{ error: string }>;
+        const { response } = axiosError;
+        if (response && response.data && response.data.error) {
+          throw response.data.error;
+        } else if (axiosError.message) {
+          throw axiosError.message;
+        } else {
+          throw "获取salt失败: 未知错误，请稍后重试。";
+        }
+      }
     },
     async login(email: string, password: string) {
-      await http.post("/user/login", { email, password });
+      try {
+        const resp = await http.post("/user/login", { email, password });
+        console.log(resp);
+        return resp.data;
+      } catch (err: any) {
+        const axiosError = err as AxiosError<{ error: string }>;
+        const { response } = axiosError;
+        if (response && response.data && response.data.error) {
+          throw response.data.error;
+        } else if (axiosError.message) {
+          throw axiosError.message;
+        } else {
+          throw "登录失败: 未知错误，请稍后重试。";
+        }
+      }
     },
     async logout() {
       await http.post("/user/logout");

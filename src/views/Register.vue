@@ -23,7 +23,9 @@ async function onSubmit() {
     try {
         const salt = CryptoJS.lib.WordArray.random(16).toString();
         const saltedPassword = password.value + salt;
+        console.log(saltedPassword);
         const encryptedPassword = CryptoJS.SHA256(saltedPassword).toString();
+        console.log(encryptedPassword); 
         await auth.register(email.value, encryptedPassword, salt);
         router.push('/login');
     } catch (err: any) {
