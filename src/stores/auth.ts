@@ -27,11 +27,12 @@ export const useAuthStore = defineStore("auth", {
         }
         const resp = await http.get<{ user: User | null }>("/user/me", {
           headers: {
-            Authorization: `${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
-        console.log(resp.data.user);
         this.user = resp.data.user;
+      } catch (err) {
+        this.user = null;
       } finally {
         this.loading = false;
       }
@@ -71,8 +72,11 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     async logout() {
-      await http.post("/user/logout");
+      // await http.post("/user/logout");
       this.user = null;
+      localStorage.removeItem("token");
+      this.loading = false;
+      window.location.href = "/";
     },
     async register(email: string, password: string, salt: string) {
       try {

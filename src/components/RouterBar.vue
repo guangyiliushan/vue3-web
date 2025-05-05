@@ -6,7 +6,7 @@
       <RouterLink to="/dashboard">Dashboard</RouterLink>
     </div>
     <div v-if="auth.isAuthenticated">
-      <RouterLink to='/User/{:id}'>User</RouterLink>
+      <RouterLink :to="`/user/${auth.user?.id}`">User</RouterLink>
     </div>
     <div v-else>
       <RouterLink to="/login">Login</RouterLink>
@@ -24,9 +24,7 @@ const auth = useAuthStore();
 
 watch(
   () => auth.isAuthenticated,
-  id => {
-    console.log('isAuthenticated changed to:', id);
-  }
+  id => {id}
 );
 
 </script>
