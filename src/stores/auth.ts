@@ -57,6 +57,7 @@ export const useAuthStore = defineStore("auth", {
       try {
         const resp = await http.post("/user/login", { email, password });
         localStorage.setItem("token", resp.data.token);
+        localStorage.setItem("refreshToken", resp.data.refreshToken);
         await this.fetchUser();
         return resp.data;
       } catch (err: any) {
@@ -75,6 +76,7 @@ export const useAuthStore = defineStore("auth", {
       // await http.post("/user/logout");
       this.user = null;
       localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
       this.loading = false;
       window.location.href = "/";
     },
