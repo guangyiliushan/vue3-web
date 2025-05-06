@@ -69,6 +69,7 @@ const updateUserInfo = async () => {
     try {
         console.log('Updating user info:', { username: newUsername.value });
         toggleEdit();
+        await auth.fetchUser();
     } catch (error) {
         alert('Error updating user info: ' + error);
     }

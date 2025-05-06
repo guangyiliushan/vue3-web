@@ -1,7 +1,9 @@
 <template>
     <form @submit.prevent="onSubmit">
-        <input v-model="email" type="email" placeholder="邮箱" required />
-        <input v-model="password" type="password" placeholder="密码" required />
+        <input v-model="email" type="email" placeholder="email" required />
+        <input v-model="verifyCode" type="text" placeholder="verifyCode" required />
+        <button :disabled="auth.loading" @click="sendVerifyCode">Verify</button>
+        <input v-model="password" type="password" placeholder="password" required />
         <button :disabled="auth.loading">注册</button>
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
     </form>
@@ -16,8 +18,13 @@ import CryptoJS from 'crypto-js';
 const auth = useAuthStore();
 const router = useRouter();
 const email = ref('');
+const verifyCode = ref('');
 const password = ref('');
 const errorMessage = ref('');
+
+async function sendVerifyCode() {
+    
+}
 
 async function onSubmit() {
     try {

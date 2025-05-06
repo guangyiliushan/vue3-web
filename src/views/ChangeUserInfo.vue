@@ -18,13 +18,13 @@
                 <div v-if="emailVerificationMethod === 'code'">
                     <p><strong>Old Email Verification Code:</strong></p>
                     <input v-model="oldEmailCode" placeholder="Old Email Code" />
-                    <button type="button" @click="sendVerificationCode('oldEmail')">Send Code</button>
+                    <button type="button" @click="sendVerifyCode('Email')">Send Code</button>
                 </div>
                 <p><strong>New Email:</strong></p>
                 <input type="text" v-model="newEmail" placeholder="New Email" />
                 <p><strong>New Email Verification Code:</strong></p>
                 <input v-model="newEmailCode" placeholder="New Email Code" />
-                <button type="button" @click="sendVerificationCode('newEmail')">Send Code</button>
+                <button type="button" @click="sendVerifyCode('Email')">Send Code</button>
                 <button type="submit">Save Email</button>
             </div>
             <div v-if="editPassword">
@@ -44,7 +44,7 @@
                 <div v-if="passwordVerificationMethod === 'code'">
                     <p><strong>Email Verification Code:</strong></p>
                     <input v-model="verificationCode" placeholder="Verification Code" />
-                    <button type="button" @click="sendVerificationCode('password')">Send Code</button>
+                    <button type="button" @click="sendVerifyCode('Email')">Send Code</button>
                 </div>
                 <p><strong>New Password:</strong></p>
                 <input type="password" v-model="newPassword" placeholder="New Password" />
@@ -63,6 +63,7 @@ import { useRoute } from 'vue-router';
 
 const auth = useAuthStore();
 const user = ref(auth.user);
+const salt = ref(auth.getSalt(auth.user?.email as string) || '');
 const userPath = "/user/"+ref(auth.user?.id).value || "/home";
 const newEmail = ref('');
 const newPassword = ref('');
@@ -73,7 +74,6 @@ const oldPassword = ref('');
 const password = ref('');
 const editPassword = ref(false);
 const editEmail = ref(false);
-const isEditing = ref(false);
 const emailVerificationMethod = ref('password');
 const passwordVerificationMethod = ref('code');
 
@@ -93,64 +93,13 @@ watch(
     { immediate: true }
 );
 
-const toggleEdit = (type: string) => {
-    isEditing.value = !isEditing.value;
-    if (!isEditing.value) {
-        newEmail.value = user.value?.email || '';
-    } else {
-        if (type === 'email') {
-            editEmail.value = true;
-            editPassword.value = false;
-        } else if (type === 'password') {
-            editEmail.value = false;
-            editPassword.value = true;
-        }
-    }
-};
+const sendVerifyCode = async (type: string) => {
+    console.log(type);
+}
 
 const updateUserInfo = async () => {
-    try {
-        if (editEmail.value) {
-            if (emailVerificationMethod.value === 'password') {
-                console.log('Updating email with password:', { password: password.value });
-                // Implement email update logic using password
-            } else {
-                console.log('Updating email with codes:', { oldEmailCode: oldEmailCode.value, newEmailCode: newEmailCode.value });
-                // Implement email update logic using codes
-            }
-        } else if (editPassword.value) {
-            if (passwordVerificationMethod.value === 'password') {
-                console.log('Updating password with old password:', { oldPassword: oldPassword.value });
-                // Implement password update logic using old password
-            } else {
-                console.log('Updating password with verification code:', { verificationCode: verificationCode.value });
-                // Implement password update logic using verification code
-            }
-        }
-        alert('User info updated successfully!');
-        toggleEdit('');
-    } catch (error) {
-        alert('Error updating user info: ' + error);
-    }
-};
-
-const sendVerificationCode = async (type: string) => {
-    try {
-        if (type === 'oldEmail') {
-            console.log('Sending verification code to old email...');
-            // 实现发送旧邮箱验证码的逻辑
-        } else if (type === 'newEmail') {
-            console.log('Sending verification code to new email...');
-            // 实现发送新邮箱验证码的逻辑
-        } else if (type === 'password') {
-            console.log('Sending verification code for password reset...');
-            // 实现发送密码重置验证码的逻辑
-        }
-        alert('Verification code sent successfully!');
-    } catch (error) {
-        alert('Error sending verification code: ' + error);
-    }
-};
+    
+}
 
 onMounted(async () => {
     if (!auth.user) {

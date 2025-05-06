@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import http from "@/utils/http";
-import type { AxiosError } from 'axios';
+import type { AxiosError } from "axios";
 
 export interface User {
   id: string;
@@ -25,11 +25,7 @@ export const useAuthStore = defineStore("auth", {
         if (!token) {
           throw "未找到认证令牌，请登录后重试。";
         }
-        const resp = await http.get<{ user: User | null }>("/user/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const resp = await http.get<{ user: User | null }>("/user/me");
         this.user = resp.data.user;
         localStorage.setItem("user", JSON.stringify(this.user));
       } catch (err) {
@@ -76,7 +72,6 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     async logout() {
-      // await http.post("/user/logout");
       this.user = null;
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
@@ -86,7 +81,11 @@ export const useAuthStore = defineStore("auth", {
     },
     async register(email: string, password: string, salt: string) {
       try {
-        const resp = await http.post("/user/register", { email, password, salt });
+        const resp = await http.post("/user/register", {
+          email,
+          password,
+          salt,
+        });
         return resp.data;
       } catch (err: any) {
         const axiosError = err as AxiosError<{ error: string }>;
@@ -99,6 +98,44 @@ export const useAuthStore = defineStore("auth", {
           throw "注册失败: 未知错误，请稍后重试。";
         }
       }
+    },
+    async updateUsername(newUsername: string) {
+      try {
+        await http.put("/user/username", {
+          user: {
+            id: this.user?.id,
+            username: newUsername,
+          },
+        });
+        await this.fetchUser();
+      } catch (err : any) {
+        const axiosError = err as AxiosError<{ error: string }>;
+        const { response } = axiosError;
+        if (response && response.data && response.data.error) {
+          throw response.data.error;
+        } else if (axiosError.message) {
+          throw axiosError.message;
+        }
+      }
+    },
+    async updateEmail(newEmail: string, verificationCode: string) {
+      try {
+        await http.put('/user/email', {
+          newEmail: newEmail,
+          verificationCode: verificationCode,
+        });
+      } catch (err) {}
+    },
+    async updatePassword(oldPassword: string, newPassword: string) {
+      try {
+        await http.put("/user/password", {
+          user:{
+          id: this.user?.id,
+          password: oldPassword,
+          newPassword: newPassword,
+          }
+        });
+      } catch (err) {}
     },
   },
 });
