@@ -6,38 +6,35 @@
                 <p><strong>ID:</strong></p>
                 <p>{{ user.id }}</p>
             </div>
-            <div>
-                <p><strong>Username:</strong></p>
-                <div v-if="!editUsername">
-                    <p>{{ user.username }}</p>
-                    <button @click="editUsername = true">Edit</button>
-                </div>
-                <div v-else>
-                    <input v-model="newUsername" placeholder="Enter new username" />
-                    <button @click="">Submit</button>
-                    <button @click="editUsername = false">Cancel</button>
-                </div>
-            </div>
-            <div>
-                <p><strong>Email:</strong></p>
-                <div v-if="!editEmail">
+            <div v-if="isEditing">
+                <form @submit.prevent="updateUserInfo">
+                    <div>
+                        <p><strong>Username:</strong></p>
+                        <input v-model="newUsername" />
+                    </div>
+                    <button type="submit">Save Changes</button>
+                    <button type="button" @click="toggleEdit">Cancel</button>
+                </form>
+                <div>
+                    <p><strong>Email:</strong></p>
                     <p>{{ user.email }}</p>
-                    <button @click="editEmail = true">Edit</button>
+                    <button @click="$router.push('/user/change/email')">Edit Email</button>
                 </div>
                 <div>
-                    <input type="text" v-model="newEmail" placeholder="Enter new email" />
-                    <button @click="">Submit</button>
-                    <button @click="editEmail = false">Cancel</button>
+                    <p><strong>Password:</strong></p>
+                    <button @click="$router.push('/user/change/password')">Edit Password</button>
                 </div>
             </div>
-            <div>
-                <p><strong>Password</strong></p>
-                <div v-if="!editPassword">
-                    <button @click="">Change Password</button>
+            <div v-else>
+                <div>
+                    <p><strong>Username:</strong></p>
+                    <p>{{ user.username }}</p>
                 </div>
-                <div v-else>
-                    <p>"waring"</p>
+                <div>
+                    <p><strong>Email:</strong></p>
+                    <p>{{ user.email }}</p>
                 </div>
+                <button @click="toggleEdit">Edit User Info</button>
             </div>
             <div>
                 <p><strong>Created At:</strong></p>
@@ -58,12 +55,24 @@ import { onMounted } from 'vue';
 
 const auth = useAuthStore();
 const user = ref(auth.user);
-const editUsername = ref(false);
-const editEmail = ref(false);
-const editPassword = ref(false);
-const newUsername = ref(user.value?.username || '');
-const newEmail = ref(user.value?.email || '');
+const newUsername = ref('');
+const isEditing = ref(false);
 
+const toggleEdit = () => {
+    isEditing.value = !isEditing.value;
+    if (!isEditing.value) {
+        newUsername.value = user.value?.username || '';
+    }
+};
+
+const updateUserInfo = async () => {
+    try {
+        console.log('Updating user info:', { username: newUsername.value });
+        toggleEdit();
+    } catch (error) {
+        alert('Error updating user info: ' + error);
+    }
+};
 
 onMounted(async () => {
     if (!auth.user) {
@@ -71,8 +80,8 @@ onMounted(async () => {
             await auth.fetchUser();
             user.value = auth.user;
         } catch (error) {
-            alert("Error fetching user data: " + error);
-            window.location.href = '/login';
+            alert('Error fetching user data: ' + error);
+            window.location.href = 'login';
         }
     }
 });

@@ -2,7 +2,9 @@
 import RouterBar from '@/components/RouterBar.vue'
 import { useAuthStore } from '@/stores/auth';
 const auth = useAuthStore();
-auth.fetchUser();
+if (!auth.user && auth.loading) {
+  auth.fetchUser();
+}
 </script>
 
 <template>

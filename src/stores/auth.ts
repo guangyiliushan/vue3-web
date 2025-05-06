@@ -11,7 +11,7 @@ export interface User {
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    user: null as User | null,
+    user: JSON.parse(localStorage.getItem("user") || "null") as User | null,
     loading: false,
   }),
   getters: {
@@ -31,8 +31,10 @@ export const useAuthStore = defineStore("auth", {
           },
         });
         this.user = resp.data.user;
+        localStorage.setItem("user", JSON.stringify(this.user));
       } catch (err) {
         this.user = null;
+        localStorage.removeItem("user");
       } finally {
         this.loading = false;
       }
@@ -58,6 +60,7 @@ export const useAuthStore = defineStore("auth", {
         const resp = await http.post("/user/login", { email, password });
         localStorage.setItem("token", resp.data.token);
         localStorage.setItem("refreshToken", resp.data.refreshToken);
+        this.loading = true;
         await this.fetchUser();
         return resp.data;
       } catch (err: any) {
@@ -77,6 +80,7 @@ export const useAuthStore = defineStore("auth", {
       this.user = null;
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
       this.loading = false;
       window.location.href = "/";
     },
