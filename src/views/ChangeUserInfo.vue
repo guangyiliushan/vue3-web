@@ -162,8 +162,9 @@ const updateUserInfo = async () => {
         } catch (error) {
             errorMessage.value = 'Error updating password: ' + error;
         }
-
     }
+    auth.logout();
+    window.location.href = 'login';
 }
 
 onMounted(async () => {

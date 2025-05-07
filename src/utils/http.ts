@@ -1,4 +1,6 @@
 import axios, { AxiosError } from 'axios';
+import { useAuthStore } from "@/stores/auth";
+
 
 const http = axios.create({
   baseURL: '/api',
@@ -27,7 +29,23 @@ http.interceptors.response.use(
     return response;
   },
   (error) => {
-    localStorage.removeItem('user');
+    console.error("Axios Error:", error);
+    if (error.response && error.response.status === 401) {
+      const errorData = error.response.data.error;
+      if (errorData === 'No refresh token provided.' || errorData === 'Invalid refresh token.') {
+        localStorage.removeItem('user');
+        const authStore = useAuthStore();
+        authStore.user = null;
+        return Promise.resolve();
+      }
+    }
+    if (error.response) {
+      console.error("Response Error:", error.response.data);
+    } else if (error.request) {
+      console.error("Request Error:", error.request);
+    } else {
+      console.error("Error Message:", error.message);
+    }
     return Promise.reject(error);
   }
 );

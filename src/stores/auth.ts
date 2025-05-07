@@ -22,7 +22,7 @@ export const useAuthStore = defineStore("auth", {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          throw "未找到认证令牌，请登录后重试。";
+          throw "No token found";
         }
         const resp = await http.get<{ user: User | null }>("/user/me");
         this.user = resp.data.user;
@@ -30,6 +30,7 @@ export const useAuthStore = defineStore("auth", {
       } catch (err) {
         this.user = null;
         localStorage.removeItem("user");
+        console.error(handleAxiosError(err));
       } finally {
         this.loading = false;
       }
