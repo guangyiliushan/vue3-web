@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
-import http from "@/utils/http";
-import type { AxiosError } from "axios";
+import http, { handleAxiosError } from "@/utils/http";
 
 export interface User {
   id: string;
@@ -40,15 +39,7 @@ export const useAuthStore = defineStore("auth", {
         const resp = await http.post("/user/salt", { email });
         return resp.data.salt;
       } catch (err: any) {
-        const axiosError = err as AxiosError<{ error: string }>;
-        const { response } = axiosError;
-        if (response && response.data && response.data.error) {
-          throw response.data.error;
-        } else if (axiosError.message) {
-          throw axiosError.message;
-        } else {
-          throw "获取salt失败: 未知错误，请稍后重试。";
-        }
+        handleAxiosError(err);
       }
     },
     async login(email: string, password: string) {
@@ -60,15 +51,7 @@ export const useAuthStore = defineStore("auth", {
         await this.fetchUser();
         return resp.data;
       } catch (err: any) {
-        const axiosError = err as AxiosError<{ error: string }>;
-        const { response } = axiosError;
-        if (response && response.data && response.data.error) {
-          throw response.data.error;
-        } else if (axiosError.message) {
-          throw axiosError.message;
-        } else {
-          throw "登录失败: 未知错误，请稍后重试。";
-        }
+        handleAxiosError(err);
       }
     },
     async logout() {
@@ -88,15 +71,7 @@ export const useAuthStore = defineStore("auth", {
         });
         return resp.data;
       } catch (err: any) {
-        const axiosError = err as AxiosError<{ error: string }>;
-        const { response } = axiosError;
-        if (response && response.data && response.data.error) {
-          throw response.data.error;
-        } else if (axiosError.message) {
-          throw axiosError.message;
-        } else {
-          throw "注册失败: 未知错误，请稍后重试。";
-        }
+        handleAxiosError(err);
       }
     },
     async updateUsername(newUsername: string) {
@@ -108,34 +83,53 @@ export const useAuthStore = defineStore("auth", {
           },
         });
         await this.fetchUser();
-      } catch (err : any) {
-        const axiosError = err as AxiosError<{ error: string }>;
-        const { response } = axiosError;
-        if (response && response.data && response.data.error) {
-          throw response.data.error;
-        } else if (axiosError.message) {
-          throw axiosError.message;
-        }
+      } catch (err: any) {
+        handleAxiosError(err);
       }
     },
-    async updateEmail(newEmail: string, verificationCode: string) {
+    async updateEmail(oldEmailCode: string, password: string, newEmail: string, newEmailCode: string) {
       try {
         await http.put('/user/email', {
-          newEmail: newEmail,
-          verificationCode: verificationCode,
+          user: {
+            id: this.user?.id,
+            oldEmailCode: oldEmailCode,
+            password: password,
+            newEmail: newEmail,
+            newEmailCode: newEmailCode,
+          }
         });
-      } catch (err) {}
+      } catch (err: any) {
+        handleAxiosError(err);
+      }
     },
-    async updatePassword(oldPassword: string, newPassword: string) {
+    async updatePassword(oldPassword: string, verifyCode: string, newPassword: string, newSalt: string) {
       try {
         await http.put("/user/password", {
           user:{
           id: this.user?.id,
-          password: oldPassword,
+          oldPassword: oldPassword,
+          verifyCode: verifyCode,
           newPassword: newPassword,
+          newSalt: newSalt,
           }
         });
-      } catch (err) {}
+      } catch (err: any) {
+        handleAxiosError(err);
+      }
+    },
+    async sendEmailCode(email: string) {
+      try {
+        await http.post("/verify/email", {
+          user: {
+            id: this.user?.id,
+          },
+          verify: {
+            email: email,
+          },
+        });
+      } catch (err: any) {
+        handleAxiosError(err);
+      }
     },
   },
 });

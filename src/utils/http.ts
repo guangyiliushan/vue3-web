@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 const http = axios.create({
   baseURL: '/api',
@@ -34,5 +34,17 @@ http.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export function handleAxiosError(err: any): never {
+  const axiosError = err as AxiosError<{ error: string }>;
+  const { response } = axiosError;
+  if (response && response.data && response.data.error) {
+    throw response.data.error;
+  } else if (axiosError.message) {
+    throw axiosError.message;
+  } else {
+    throw "unknown error occurred. Please try again later.";
+  }
+}
 
 export default http;
