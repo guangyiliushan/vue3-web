@@ -6,6 +6,8 @@ import DashboardView from '@/views/Dashboard.vue'
 import LoginView from '@/views/Login.vue'
 import RegisterView from '@/views/Register.vue'
 import UserView from '@/views/User.vue'
+import ChangePasswordView from '@/views/ChangeUserInfo.vue'
+import ChangeEmailView from '@/views/ChangeUserInfo.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: HomeView },
@@ -14,6 +16,8 @@ const routes = [
   { path: '/login', name: 'Login', component: LoginView },
   { path: '/register', name: 'Register', component: RegisterView },
   { path: '/user/:id', name: 'User', component: UserView },
+  { path: '/user/change/password', name: 'ChangePassword', component: ChangePasswordView },
+  { path: '/user/change/email', name: 'ChangeEmail', component: ChangeEmailView }
 ]
 
 const router = createRouter({
