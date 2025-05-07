@@ -20,18 +20,45 @@ const router = useRouter();
 const email = ref('');
 const verifyCode = ref('');
 const password = ref('');
+const clicked = ref(false);
+const countdown = ref(0);
 const errorMessage = ref('');
 
 async function sendVerifyCode() {
-    
+    try {
+        if (!email.value) {
+            return (errorMessage.value = 'please input email');
+        }
+        if (countdown.value > 0) {
+            return (errorMessage.value = `please wait for ${countdown.value} seconds`);
+        }
+        await auth.sendEmailCode(email.value);
+        clicked.value = true;
+        countdown.value = 60;
+
+        const timer = setInterval(() => {
+            countdown.value -= 1;
+            if (countdown.value <= 0) {
+                clearInterval(timer);
+            }
+        }, 1000);
+    } catch (error: any) {
+        errorMessage.value = error;
+    }
 }
 
 async function onSubmit() {
+    if (!clicked.value) {
+        return (errorMessage.value = 'please send the verification code first');
+    }
+    if (!email.value || !password.value || !verifyCode.value) {
+        return (errorMessage.value = 'please input email, password and verifyCode');
+    }
     try {
         const salt = CryptoJS.lib.WordArray.random(16).toString();
         const saltedPassword = password.value + salt;
         const encryptedPassword = CryptoJS.SHA256(saltedPassword).toString();
-        await auth.register(email.value, encryptedPassword, salt);
+        await auth.register(email.value, encryptedPassword, salt, verifyCode.value);
         router.push('/login');
     } catch (err: any) {
         errorMessage.value = err;

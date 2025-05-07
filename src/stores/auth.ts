@@ -62,12 +62,13 @@ export const useAuthStore = defineStore("auth", {
       this.loading = false;
       window.location.href = "/";
     },
-    async register(email: string, password: string, salt: string) {
+    async register(email: string, password: string, salt: string, verifyCode: string) {
       try {
         const resp = await http.post("/user/register", {
           email,
           password,
           salt,
+          verifyCode,
         });
         return resp.data;
       } catch (err: any) {
@@ -76,7 +77,7 @@ export const useAuthStore = defineStore("auth", {
     },
     async updateUsername(newUsername: string) {
       try {
-        await http.put("/user/username", {
+        await http.put("/user/update/username", {
           user: {
             id: this.user?.id,
             username: newUsername,
@@ -89,7 +90,7 @@ export const useAuthStore = defineStore("auth", {
     },
     async updateEmail(oldEmailCode: string, password: string, newEmail: string, newEmailCode: string) {
       try {
-        await http.put('/user/email', {
+        await http.put('/user/update/email', {
           user: {
             id: this.user?.id,
             oldEmailCode: oldEmailCode,
@@ -104,7 +105,7 @@ export const useAuthStore = defineStore("auth", {
     },
     async updatePassword(oldPassword: string, verifyCode: string, newPassword: string, newSalt: string) {
       try {
-        await http.put("/user/password", {
+        await http.put("/user/update/password", {
           user:{
           id: this.user?.id,
           oldPassword: oldPassword,
@@ -119,9 +120,9 @@ export const useAuthStore = defineStore("auth", {
     },
     async sendEmailCode(email: string) {
       try {
-        await http.post("/verify/email", {
+        await http.put("/verify/email", {
           user: {
-            id: this.user?.id,
+            id: this.user?.id || 'register',
           },
           verify: {
             email: email,

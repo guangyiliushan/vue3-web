@@ -27,10 +27,7 @@ http.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      alert('Session expired. Please log in again.');
-      window.location.href = '/login';
-    }
+    localStorage.removeItem('user');
     return Promise.reject(error);
   }
 );
