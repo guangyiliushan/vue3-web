@@ -45,7 +45,6 @@ export const usePostStore = defineStore('post', {
   state: () => ({
     postsCache: new Map<number, Post>(),
     queryResultsCache: new Map<string, PostQueryResult>(),
-    apiBaseUrl: '/api',
   }),
   
   actions: {
@@ -58,7 +57,7 @@ export const usePostStore = defineStore('post', {
       }
 
       try {
-        const response = await http.get(`${this.apiBaseUrl}/post`, { params });
+        const response = await http.get(`/post`, { params });
         const result: PostQueryResult = response.data;
 
         this.queryResultsCache.set(cacheKey, result);
@@ -74,7 +73,7 @@ export const usePostStore = defineStore('post', {
       if (cachedPost && cachedPost.content) return cachedPost;
 
       try {
-        const response = await http.get(`${this.apiBaseUrl}/post/${id}`);
+        const response = await http.get(`/post/${id}`);
         const post: Post = response.data;
         this.postsCache.set(id, post);
         return post;
