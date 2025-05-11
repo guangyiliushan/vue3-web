@@ -165,7 +165,7 @@ const resetSearch = () => {
 // 查询文章列表
 const fetchArticles = async () => {
     if (loading.value) return;
-    
+
     loading.value = true;
     try {
         const params = {
@@ -173,29 +173,23 @@ const fetchArticles = async () => {
             pageSize: pageSize.value,
             search: searchQuery.value,
             category: selectedCategory.value,
-            isTimeline: isTimelineView.value
+            isTimeline: isTimelineView.value,
         };
-        
-        // 根据视图模式选择不同的查询方法
-        const result = isTimelineView.value
-            ? await articleStore.fetchTimelineArticles(params)
-            : await articleStore.fetchArticlesByPage(params);
-        
-        // 更新文章列表和分页信息
+
+        const result = await articleStore.fetchArticles(params);
+
         if (result.articles.length > 0) {
-            // 为每篇文章添加loaded属性
             displayedArticles.value = result.articles.map(article => ({
                 ...article,
-                loaded: false
+                loaded: false,
             }));
         } else {
             displayedArticles.value = [];
         }
-        
+
         totalArticles.value = result.total;
         hasMore.value = currentPage.value < Math.ceil(result.total / pageSize.value);
-        
-        // 更新分类和标签
+
         if (currentPage.value === 1) {
             categories.value = result.categories || [];
             tags.value = result.tags || [];
