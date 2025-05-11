@@ -4,7 +4,7 @@
       <div class="main-content">
         <h1>{{ post.title }}</h1>
         <div class="meta">{{ post.publishedAt }} | 分类: {{ post.category }} | 浏览量: {{ post.views }} | 字数: {{ wordCount }}</div>
-        <div class="article-container" ref="articleContainer" @scroll="onScroll">
+        <div class="post-container" ref="postContainer" @scroll="onScroll">
           <article v-html="renderedHtml"></article>
           <div class="comments">
             <!-- 在这里插入评论组件 -->
@@ -35,7 +35,7 @@
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownIt from 'markdown-it'
-import { useArticleStore, type Article } from '@/stores/article'
+import { usePostStore, type Post } from '@/stores/post'
 
 // 定义目录项接口
 interface TocItem {
@@ -45,9 +45,9 @@ interface TocItem {
 }
 
 const route = useRoute()
-const articleStore = useArticleStore()
-const articleContainer = ref<HTMLElement | null>(null)
-const post = reactive<Article>({
+const postStore = usePostStore()
+const postContainer = ref<HTMLElement | null>(null)
+const post = reactive<Post>({
   id: 0,
   title: '',
   publishedAt: '',
@@ -74,9 +74,9 @@ function generateReadingTime(text: string): number {
 }
 
 function buildTOC(): void {
-  if (!articleContainer.value) return;
+  if (!postContainer.value) return;
   
-  const headings = articleContainer.value.querySelectorAll('h2, h3, h4')
+  const headings = postContainer.value.querySelectorAll('h2, h3, h4')
   const list: TocItem[] = []
   headings.forEach((h: Element) => {
     if (!h.id) {
@@ -92,22 +92,22 @@ function buildTOC(): void {
 }
 
 function scrollTo(id: string): void {
-  if (!articleContainer.value) return;
-  const el = articleContainer.value.querySelector('#' + id)
+  if (!postContainer.value) return;
+  const el = postContainer.value.querySelector('#' + id)
   if (el) {
-    const containerTop = articleContainer.value.getBoundingClientRect().top
+    const containerTop = postContainer.value.getBoundingClientRect().top
     const targetTop = el.getBoundingClientRect().top
-    articleContainer.value.scrollTo({ top: targetTop - containerTop + articleContainer.value.scrollTop, behavior: 'smooth' })
+    postContainer.value.scrollTo({ top: targetTop - containerTop + postContainer.value.scrollTop, behavior: 'smooth' })
   }
 }
 
 function scrollToTop(): void {
-  if (!articleContainer.value) return;
-  articleContainer.value.scrollTo({ top: 0, behavior: 'smooth' })
+  if (!postContainer.value) return;
+  postContainer.value.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function onScroll(): void {
-  const el = articleContainer.value
+  const el = postContainer.value
   if (!el) return;
   progress.value = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100
 }
@@ -116,31 +116,32 @@ function like(): void {
   likes.value++
 }
 
+const fetchPostById = async (id: number) => {
+  const data = await postStore.getPostById(id);
+  if (data) {
+    Object.assign(post, data);
+    likes.value = post.likes || 0;
+    const md = new MarkdownIt();
+    renderedHtml.value = md.render(post.content || '');
+    readingTime.value = generateReadingTime(post.content || '');
+    wordCount.value = (post.content || '').trim().split(/\s+/).length;
+    await nextTick();
+    buildTOC();
+  }
+};
+
 onMounted(async () => {
   const id = Number(route.params.id)
-  let data = await articleStore.getArticleById(id)
-  if (!data || !data.content) {
-    data = await articleStore.getArticleById(id)
-  }
-  if (data) {
-    Object.assign(post, data)
-    likes.value = post.likes || 0
-    const md = new MarkdownIt()
-    renderedHtml.value = md.render(post.content || '')
-    readingTime.value = generateReadingTime(post.content || '')
-    wordCount.value = (post.content || '').trim().split(/\s+/).length
-    await nextTick()
-    buildTOC()
-    
-    if (!articleContainer.value) return;
-    
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) activeId.value = e.target.id
-      })
-    }, { root: articleContainer.value, threshold: 0.1 })
-    
-    articleContainer.value.querySelectorAll('h2, h3, h4').forEach((h: Element) => io.observe(h))
-  }
+  await fetchPostById(id)
+  
+  if (!postContainer.value) return;
+  
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) activeId.value = e.target.id
+    })
+  }, { root: postContainer.value, threshold: 0.1 })
+  
+  postContainer.value.querySelectorAll('h2, h3, h4').forEach((h: Element) => io.observe(h))
 })
 </script>

@@ -1,7 +1,7 @@
 <template>
     <div class="blog-discover">
         <div class="top-bar">
-            <input v-model="searchQuery" placeholder="Search articles..." @input="handleSearchInput" />
+            <input v-model="searchQuery" placeholder="Search posts..." @input="handleSearchInput" />
         </div>
         <div class="content">
             <div>
@@ -21,42 +21,42 @@
             </div>
 
             <!-- 列表视图 -->
-            <main v-if="!isTimelineView" class="articles">
-                <div class="article-list">
-                    <div v-for="article in displayedArticles" :key="article.id" class="article-card"
-                         v-intersection-observer="{ callback: () => loadArticleContent(article) }">
-                        <a @click="goToArticle(article.id)">
-                            <h3>{{ article.title }}</h3>
-                            <p>{{ article.excerpt }}</p>
-                            <p v-if="article.loaded">
-                                <strong>Published:</strong> {{ article.publishedAt }} |
-                                <strong>Category:</strong> {{ article.category }} |
-                                <strong>Views:</strong> {{ article.views }} |
-                                <strong>Likes:</strong> {{ article.likes }}
+            <main v-if="!isTimelineView" class="posts">
+                <div class="post-list">
+                    <div v-for="post in displayedPosts" :key="post.id" class="post-card"
+                         v-intersection-observer="{ callback: () => loadPostContent(post) }">
+                        <a @click="goToPost(post.id)">
+                            <h3>{{ post.title }}</h3>
+                            <p>{{ post.excerpt }}</p>
+                            <p v-if="post.loaded">
+                                <strong>Published:</strong> {{ post.publishedAt }} |
+                                <strong>Category:</strong> {{ post.category }} |
+                                <strong>Views:</strong> {{ post.views }} |
+                                <strong>Likes:</strong> {{ post.likes }}
                             </p>
                             <p v-else class="loading-placeholder">加载文章详情中...</p>
-                            <button @click="goToArticle(article.id)">Read More</button>
+                            <button @click="goToPost(post.id)">Read More</button>
                         </a>
                     </div>
                 </div>
                 <div v-if="loading" class="loading">加载中...</div>
-                <div v-if="!hasMore && displayedArticles.length > 0" class="end-message">已加载全部文章</div>
+                <div v-if="!hasMore && displayedPosts.length > 0" class="end-message">已加载全部文章</div>
             </main>
 
             <!-- 时间线视图 -->
             <div v-else class="timeline-view">
                 <div class="timeline">
-                    <div v-for="article in displayedArticles" :key="article.id" class="timeline-item"
-                         v-intersection-observer="{ callback: () => loadArticleContent(article) }">
+                    <div v-for="post in displayedPosts" :key="post.id" class="timeline-item"
+                         v-intersection-observer="{ callback: () => loadPostContent(post) }">
                         <div class="circle"></div>
                         <div class="item-content">
-                            <h4>{{ article.title }}</h4>
-                            <span v-if="article.loaded">{{ article.publishedAt }}</span>
+                            <h4>{{ post.title }}</h4>
+                            <span v-if="post.loaded">{{ post.publishedAt }}</span>
                             <span v-else class="loading-placeholder">加载中...</span>
                         </div>
                     </div>
                     <div v-if="loading" class="loading">加载中...</div>
-                    <div v-if="!hasMore && displayedArticles.length > 0" class="end-message">已加载全部文章</div>
+                    <div v-if="!hasMore && displayedPosts.length > 0" class="end-message">已加载全部文章</div>
                 </div>
             </div>
 
@@ -70,7 +70,7 @@
             <div>
                 <aside class="sidebar">
                     <h3>Statistics</h3>
-                    <p>Total Articles: {{ totalArticles }}</p>
+                    <p>Total Posts: {{ totalPosts }}</p>
                     <p>Total Tags: {{ tags.length }}</p>
                 </aside>
             </div>
@@ -81,12 +81,12 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import type { LoadableArticle, IntersectionObserverValue } from '@/stores/article';
-import { useArticleStore } from '@/stores/article';
+import type { LoadablePost, IntersectionObserverValue } from '@/stores/post';
+import { usePostStore } from '@/stores/post';
 import type { Directive, DirectiveBinding } from 'vue';
 
 const router = useRouter();
-const articleStore = useArticleStore();
+const postStore = usePostStore();
 
 // 查询参数
 const searchQuery = ref('');
@@ -95,13 +95,13 @@ const selectedCategory = ref('');
 const isTimelineView = ref(false);
 
 // 分页相关
-const displayedArticles = ref<LoadableArticle[]>([]);
+const displayedPosts = ref<LoadablePost[]>([]);
 const currentPage = ref(1);
 const pageSize = ref(10);
 const loading = ref(false);
 const hasMore = ref(true);
-const totalArticles = ref(0);
-const totalPages = computed(() => Math.ceil(totalArticles.value / pageSize.value));
+const totalPosts = ref(0);
+const totalPages = computed(() => Math.ceil(totalPosts.value / pageSize.value));
 
 // 分类和标签
 const categories = ref<string[]>([]);
@@ -123,22 +123,22 @@ const vIntersectionObserver: Directive<HTMLElement, IntersectionObserverValue> =
 };
 
 // 加载文章内容
-const loadArticleContent = async (article: LoadableArticle) => {
-    if (article.loaded) return;
+const loadPostContent = async (post: LoadablePost) => {
+    if (post.loaded) return;
     
     try {
         // 获取文章详细信息
-        const fullArticle = await articleStore.getArticleById(article.id);
+        const fullPost = await postStore.getPostById(post.id);
         
         // 更新文章信息
-        if (fullArticle) {
-            Object.assign(article, {
-                ...fullArticle,
+        if (fullPost) {
+            Object.assign(post, {
+                ...fullPost,
                 loaded: true
             });
         }
     } catch (error) {
-        console.error(`Failed to load article ${article.id}:`, error);
+        console.error(`Failed to load post ${post.id}:`, error);
     }
 };
 
@@ -157,13 +157,13 @@ const handleSearchInput = () => {
 // 重置搜索
 const resetSearch = () => {
     currentPage.value = 1;
-    displayedArticles.value = [];
+    displayedPosts.value = [];
     hasMore.value = true;
-    fetchArticles();
+    fetchPosts();
 };
 
 // 查询文章列表
-const fetchArticles = async () => {
+const fetchPosts = async () => {
     if (loading.value) return;
 
     loading.value = true;
@@ -176,18 +176,18 @@ const fetchArticles = async () => {
             isTimeline: isTimelineView.value,
         };
 
-        const result = await articleStore.fetchArticles(params);
+        const result = await postStore.fetchPosts(params);
 
-        if (result.articles.length > 0) {
-            displayedArticles.value = result.articles.map(article => ({
-                ...article,
+        if (result.posts.length > 0) {
+            displayedPosts.value = result.posts.map(post => ({
+                ...post,
                 loaded: false,
             }));
         } else {
-            displayedArticles.value = [];
+            displayedPosts.value = [];
         }
 
-        totalArticles.value = result.total;
+        totalPosts.value = result.total;
         hasMore.value = currentPage.value < Math.ceil(result.total / pageSize.value);
 
         if (currentPage.value === 1) {
@@ -195,7 +195,7 @@ const fetchArticles = async () => {
             tags.value = result.tags || [];
         }
     } catch (error) {
-        console.error('Failed to fetch articles:', error);
+        console.error('Failed to fetch posts:', error);
     } finally {
         loading.value = false;
     }
@@ -220,9 +220,9 @@ const selectCategory = (category: string) => {
 };
 
 // 跳转到文章详情页
-const goToArticle = (id: number) => {
+const goToPost = (id: number) => {
     // 跳转前先尝试预加载文章内容
-    articleStore.getArticleById(id).then(() => {
+    postStore.getPostById(id).then(() => {
         router.push(`/blog/${id}`);
     });
 };
@@ -231,14 +231,14 @@ const goToArticle = (id: number) => {
 const changePage = (page: number) => {
     if (page < 1 || (page > totalPages.value && totalPages.value > 0)) return;
     currentPage.value = page;
-    fetchArticles();
+    fetchPosts();
     // 滚动到顶部
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 // 初始化
 onMounted(() => {
-    fetchArticles();
+    fetchPosts();
 });
 
 // 监听视图模式变化
@@ -250,11 +250,11 @@ watch(isTimelineView, () => {
 </script>
 
 <style scoped>
-.article-list {
+.post-list {
     width: 100%;
 }
 
-.article-card {
+.post-card {
     margin-bottom: 20px;
     padding: 15px;
     border: 1px solid #eee;
@@ -262,7 +262,7 @@ watch(isTimelineView, () => {
     transition: transform 0.2s;
 }
 
-.article-card:hover {
+.post-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }

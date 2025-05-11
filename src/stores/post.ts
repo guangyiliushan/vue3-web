@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import http, { handleAxiosError } from "@/utils/http";
 
 // 类型定义
-export interface Article {
+export interface Post {
   id: number;
   title: string;
   excerpt: string;
@@ -15,11 +15,11 @@ export interface Article {
   tags?: string[];
 }
 
-export interface LoadableArticle extends Article {
+export interface LoadablePost extends Post {
   loaded?: boolean;
 }
 
-export interface ArticleQueryParams {
+export interface PostQueryParams {
   page?: number;
   pageSize?: number;
   lastId?: number | null;
@@ -29,8 +29,8 @@ export interface ArticleQueryParams {
   isTimeline?: boolean;
 }
 
-export interface ArticleQueryResult {
-  articles: Article[];
+export interface PostQueryResult {
+  posts: Post[];
   total: number;
   categories?: string[];
   tags?: string[];
@@ -41,15 +41,15 @@ export interface IntersectionObserverValue {
 }
 
 // 创建文章存储
-export const useArticleStore = defineStore('article', {
+export const usePostStore = defineStore('post', {
   state: () => ({
-    articlesCache: new Map<number, Article>(),
-    queryResultsCache: new Map<string, ArticleQueryResult>(),
+    postsCache: new Map<number, Post>(),
+    queryResultsCache: new Map<string, PostQueryResult>(),
     apiBaseUrl: '/api',
   }),
   
   actions: {
-    async fetchArticles(params: ArticleQueryParams): Promise<ArticleQueryResult> {
+    async fetchPosts(params: PostQueryParams): Promise<PostQueryResult> {
       const cacheKey = this.generateCacheKey(params);
       const cachedResult = this.queryResultsCache.get(cacheKey);
 
@@ -58,39 +58,37 @@ export const useArticleStore = defineStore('article', {
       }
 
       try {
-        const response = await http.get(`${this.apiBaseUrl}/articles`, { params });
-        const result: ArticleQueryResult = response.data;
+        const response = await http.get(`${this.apiBaseUrl}/post`, { params });
+        const result: PostQueryResult = response.data;
 
         this.queryResultsCache.set(cacheKey, result);
-        result.articles.forEach(article => this.articlesCache.set(article.id, article));
+        result.posts.forEach(post => this.postsCache.set(post.id, post));
         return result;
       } catch (error) {
         handleAxiosError(error);
-        return { articles: [], total: 0 };
       }
     },
 
-    async getArticleById(id: number): Promise<Article | null> {
-      const cachedArticle = this.articlesCache.get(id);
-      if (cachedArticle && cachedArticle.content) return cachedArticle;
+    async getPostById(id: number): Promise<Post | null> {
+      const cachedPost = this.postsCache.get(id);
+      if (cachedPost && cachedPost.content) return cachedPost;
 
       try {
-        const response = await http.get(`${this.apiBaseUrl}/articles/${id}`);
-        const article: Article = response.data;
-        this.articlesCache.set(id, article);
-        return article;
+        const response = await http.get(`${this.apiBaseUrl}/post/${id}`);
+        const post: Post = response.data;
+        this.postsCache.set(id, post);
+        return post;
       } catch (error) {
         handleAxiosError(error);
-        return cachedArticle || null;
       }
     },
 
-    generateCacheKey(params: ArticleQueryParams): string {
+    generateCacheKey(params: PostQueryParams): string {
       return `${params.search || ''}_${params.category || ''}_${params.isTimeline ? 'timeline' : 'list'}`;
     },
 
     clearCache() {
-      this.articlesCache.clear();
+      this.postsCache.clear();
       this.queryResultsCache.clear();
     },
   },
