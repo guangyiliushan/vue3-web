@@ -29,7 +29,7 @@
                             <h3>{{ post.title }}</h3>
                             <p>{{ post.excerpt }}</p>
                             <p v-if="post.loaded">
-                                <strong>Published:</strong> {{ post.publishedAt }} |
+                                <strong>Published:</strong> {{ post.createdAt }} |
                                 <strong>Category:</strong> {{ post.category }} |
                                 <strong>Views:</strong> {{ post.views }} |
                                 <strong>Likes:</strong> {{ post.likes }}
@@ -51,7 +51,7 @@
                         <div class="circle"></div>
                         <div class="item-content">
                             <h4>{{ post.title }}</h4>
-                            <span v-if="post.loaded">{{ post.publishedAt }}</span>
+                            <span v-if="post.loaded">{{ post.createdAt }}</span>
                             <span v-else class="loading-placeholder">加载中...</span>
                         </div>
                     </div>
@@ -220,7 +220,7 @@ const selectCategory = (category: string) => {
 };
 
 // 跳转到文章详情页
-const goToPost = (id: number) => {
+const goToPost = (id: string) => {
     // 跳转前先尝试预加载文章内容
     postStore.getPostById(id).then(() => {
         router.push(`/blog/${id}`);

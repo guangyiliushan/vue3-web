@@ -3,10 +3,10 @@ import http, { handleAxiosError } from "@/utils/http";
 
 // 类型定义
 export interface Post {
-  id: number;
+  id: string;
   title: string;
   excerpt: string;
-  publishedAt: string;
+  createdAt: string;
   updatedAt?: string;
   category: string;
   views: number;
@@ -43,7 +43,7 @@ export interface IntersectionObserverValue {
 // 创建文章存储
 export const usePostStore = defineStore('post', {
   state: () => ({
-    postsCache: new Map<number, Post>(),
+    postsCache: new Map<string, Post>(),
     queryResultsCache: new Map<string, PostQueryResult>(),
   }),
   
@@ -68,7 +68,7 @@ export const usePostStore = defineStore('post', {
       }
     },
 
-    async getPostById(id: number): Promise<Post | null> {
+    async getPostById(id: string): Promise<Post | null> {
       const cachedPost = this.postsCache.get(id);
       if (cachedPost && cachedPost.content) return cachedPost;
 

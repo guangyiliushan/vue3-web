@@ -3,7 +3,7 @@
     <div class="content-wrapper">
       <div class="main-content">
         <h1>{{ post.title }}</h1>
-        <div class="meta">{{ post.publishedAt }} | 分类: {{ post.category }} | 浏览量: {{ post.views }} | 字数: {{ wordCount }}</div>
+        <div class="meta">{{ post.createdAt }} | 分类: {{ post.category }} | 浏览量: {{ post.views }} | 字数: {{ wordCount }}</div>
         <div class="post-container" ref="postContainer" @scroll="onScroll">
           <article v-html="renderedHtml"></article>
           <div class="comments">
@@ -48,9 +48,9 @@ const route = useRoute()
 const postStore = usePostStore()
 const postContainer = ref<HTMLElement | null>(null)
 const post = reactive<Post>({
-  id: 0,
+  id: '',
   title: '',
-  publishedAt: '',
+  createdAt: '',
   updatedAt: '',
   category: '',
   views: 0,
@@ -76,7 +76,7 @@ function generateReadingTime(text: string): number {
 function buildTOC(): void {
   if (!postContainer.value) return;
   
-  const headings = postContainer.value.querySelectorAll('h2, h3, h4')
+  const headings = postContainer.value.querySelectorAll('h1, h2, h3')
   const list: TocItem[] = []
   headings.forEach((h: Element) => {
     if (!h.id) {
@@ -116,7 +116,7 @@ function like(): void {
   likes.value++
 }
 
-const fetchPostById = async (id: number) => {
+const fetchPostById = async (id: string) => {
   const data = await postStore.getPostById(id);
   if (data) {
     Object.assign(post, data);
@@ -131,7 +131,7 @@ const fetchPostById = async (id: number) => {
 };
 
 onMounted(async () => {
-  const id = Number(route.params.id)
+  const id = String(route.params.id)
   await fetchPostById(id)
   
   if (!postContainer.value) return;
@@ -142,6 +142,6 @@ onMounted(async () => {
     })
   }, { root: postContainer.value, threshold: 0.1 })
   
-  postContainer.value.querySelectorAll('h2, h3, h4').forEach((h: Element) => io.observe(h))
+  postContainer.value.querySelectorAll('h1, h2, h3').forEach((h: Element) => io.observe(h))
 })
 </script>
