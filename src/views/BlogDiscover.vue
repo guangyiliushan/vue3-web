@@ -6,14 +6,12 @@
         <div class="content">
             <div>
                 <div>
-                    <button @click="toggleTimelineView">
-                        {{ isTimelineView ? 'List View' : 'TimeLine' }}
-                    </button>
                     <button @click="toggleCategoryDropdown">Categories</button>
                     <div v-if="showCategoryDropdown" class="dropdown">
                         <ul>
-                            <li v-for="category in categories" :key="category" @click="selectCategory(category)">
-                                {{ category }}
+                            <li @click="selectCategory('')">All</li>
+                            <li v-for="category in categories" :key="category.id" @click="selectCategory(category.id)">
+                                {{ category.name }}
                             </li>
                         </ul>
                     </div>
@@ -21,7 +19,7 @@
             </div>
 
             <!-- 列表视图 -->
-            <main v-if="!isTimelineView" class="posts">
+            <main class="posts">
                 <div class="post-list">
                     <div v-for="post in displayedPosts" :key="post.id" class="post-card"
                          v-intersection-observer="{ callback: () => loadPostContent(post) }">
@@ -42,24 +40,6 @@
                 <div v-if="loading" class="loading">加载中...</div>
                 <div v-if="!hasMore && displayedPosts.length > 0" class="end-message">已加载全部文章</div>
             </main>
-
-            <!-- 时间线视图 -->
-            <div v-else class="timeline-view">
-                <div class="timeline">
-                    <div v-for="post in displayedPosts" :key="post.id" class="timeline-item"
-                         v-intersection-observer="{ callback: () => loadPostContent(post) }">
-                        <div class="circle"></div>
-                        <div class="item-content">
-                            <h4>{{ post.title }}</h4>
-                            <span v-if="post.loaded">{{ post.createdAt }}</span>
-                            <span v-else class="loading-placeholder">加载中...</span>
-                        </div>
-                    </div>
-                    <div v-if="loading" class="loading">加载中...</div>
-                    <div v-if="!hasMore && displayedPosts.length > 0" class="end-message">已加载全部文章</div>
-                </div>
-            </div>
-
             <!-- 分页控制器 -->
             <div class="pagination-controls">
                 <button :disabled="currentPage <= 1" @click="changePage(currentPage - 1)">上一页</button>
@@ -92,19 +72,18 @@ const postStore = usePostStore();
 const searchQuery = ref('');
 const showCategoryDropdown = ref(false);
 const selectedCategory = ref('');
-const isTimelineView = ref(false);
 
 // 分页相关
 const displayedPosts = ref<LoadablePost[]>([]);
 const currentPage = ref(1);
-const pageSize = ref(10);
+const pageSize = ref(5);
 const loading = ref(false);
 const hasMore = ref(true);
 const totalPosts = ref(0);
 const totalPages = computed(() => Math.ceil(totalPosts.value / pageSize.value));
 
 // 分类和标签
-const categories = ref<string[]>([]);
+const categories = ref<{ id: string; name: string }[]>([]);
 const tags = ref<string[]>([]);
 
 // 交叉观察器指令，用于检测元素是否进入视口
@@ -173,7 +152,6 @@ const fetchPosts = async () => {
             pageSize: pageSize.value,
             search: searchQuery.value,
             category: selectedCategory.value,
-            isTimeline: isTimelineView.value,
         };
 
         const result = await postStore.fetchPosts(params);
@@ -206,15 +184,9 @@ const toggleCategoryDropdown = () => {
     showCategoryDropdown.value = !showCategoryDropdown.value;
 };
 
-// 切换视图模式
-const toggleTimelineView = () => {
-    isTimelineView.value = !isTimelineView.value;
-    resetSearch(); // 切换视图时重新查询
-};
-
 // 选择分类
-const selectCategory = (category: string) => {
-    selectedCategory.value = selectedCategory.value === category ? '' : category;
+const selectCategory = (categoryId: string) => {
+    selectedCategory.value = selectedCategory.value === categoryId ? '' : categoryId;
     resetSearch();
     showCategoryDropdown.value = false;
 };
@@ -241,12 +213,6 @@ onMounted(() => {
     fetchPosts();
 });
 
-// 监听视图模式变化
-watch(isTimelineView, () => {
-    // 调整每页显示的数量
-    pageSize.value = isTimelineView.value ? 20 : 10;
-    resetSearch();
-});
 </script>
 
 <style scoped>

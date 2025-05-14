@@ -32,7 +32,7 @@ export interface PostQueryParams {
 export interface PostQueryResult {
   posts: Post[];
   total: number;
-  categories?: string[];
+  categories?: { id: string; name: string; count: number }[];
   tags?: string[];
 }
 
