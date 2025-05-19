@@ -52,7 +52,7 @@ const post = reactive<Post>({
   title: '',
   createdAt: '',
   updatedAt: '',
-  category: '',
+  category: { id: '', name: '' },
   views: 0,
   likes: 0,
   excerpt: '',

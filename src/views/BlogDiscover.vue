@@ -22,7 +22,7 @@
             <main class="posts">
                 <div class="post-list">
                     <div v-for="post in displayedPosts" :key="post.id" class="post-card"
-                         v-intersection-observer="{ callback: () => loadPostContent(post) }">
+                        v-intersection-observer="{ callback: () => loadPostContent(post) }">
                         <a @click="goToPost(post.id)">
                             <h3>{{ post.title }}</h3>
                             <p>{{ post.excerpt }}</p>
@@ -42,9 +42,12 @@
             </main>
             <!-- 分页控制器 -->
             <div class="pagination-controls">
-                <button :disabled="currentPage <= 1" @click="changePage(currentPage - 1)">上一页</button>
-                <span>{{ currentPage }} / {{ totalPages || 1 }}</span>
-                <button :disabled="currentPage >= totalPages || !hasMore" @click="changePage(currentPage + 1)">下一页</button>
+                <button :disabled="!hasPrevPage" @click="prevPage">上一页</button>
+                <div>
+                    <input type="text" @input="changePage(currentPage)" />
+                    <span v-if="totalPages > 0"> {{ currentPage }} / {{ totalPages }}</span>
+                </div>
+                <button :disabled="!hasNextPage" @click="nextPage">下一页</button>
             </div>
 
             <div>
@@ -59,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { LoadablePost, IntersectionObserverValue } from '@/stores/post';
 import { usePostStore } from '@/stores/post';
@@ -72,10 +75,14 @@ const postStore = usePostStore();
 const searchQuery = ref('');
 const showCategoryDropdown = ref(false);
 const selectedCategory = ref('');
+const nextCursor = computed(() => postStore.pagination.nextCursor);
+const prevCursor = computed(() => postStore.pagination.prevCursor);
+const hasNextPage = computed(() => postStore.pagination.hasNextPage);
+const hasPrevPage = computed(() => postStore.pagination.hasPrevPage);
 
 // 分页相关
 const displayedPosts = ref<LoadablePost[]>([]);
-const currentPage = ref(1);
+const currentPage = computed(() => postStore.pagination.currentPage);
 const pageSize = ref(5);
 const loading = ref(false);
 const hasMore = ref(true);
@@ -104,11 +111,11 @@ const vIntersectionObserver: Directive<HTMLElement, IntersectionObserverValue> =
 // 加载文章内容
 const loadPostContent = async (post: LoadablePost) => {
     if (post.loaded) return;
-    
+
     try {
         // 获取文章详细信息
         const fullPost = await postStore.getPostById(post.id);
-        
+
         // 更新文章信息
         if (fullPost) {
             Object.assign(post, {
@@ -127,7 +134,7 @@ const handleSearchInput = () => {
     if (searchTimeout) {
         clearTimeout(searchTimeout);
     }
-    
+
     searchTimeout = window.setTimeout(() => {
         resetSearch();
     }, 300);
@@ -135,23 +142,47 @@ const handleSearchInput = () => {
 
 // 重置搜索
 const resetSearch = () => {
-    currentPage.value = 1;
     displayedPosts.value = [];
     hasMore.value = true;
-    fetchPosts();
+    fetchPosts(1);
+};
+// 下一页预处理
+const nextPage = () => {
+    if (!nextCursor.value || currentPage.value >= totalPages.value) return;
+    const nextPage = Math.min(currentPage.value + 1, totalPages.value);
+    const cursor = JSON.stringify(nextCursor.value);
+    fetchPosts(nextPage, cursor, 'next');
+};
+
+// 上一页预处理
+const prevPage = () => {
+    if (!prevCursor.value || currentPage.value <= 1) return;
+    const prevPage = Math.max(currentPage.value - 1, 1);
+    const cursor = JSON.stringify(prevCursor.value);
+    fetchPosts(prevPage, cursor, 'prev');
+};
+
+// 切换页面
+const changePage = (page: number) => {
+    if (page < 1 || (page > totalPages.value && totalPages.value > 0)) return;
+    fetchPosts(page);
+    // 滚动到顶部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 // 查询文章列表
-const fetchPosts = async () => {
+const fetchPosts = async (page?: number, cursor?: string, direction?: string) => {
     if (loading.value) return;
 
     loading.value = true;
     try {
-        const params = {
-            page: currentPage.value,
+        const params: Record<string, any> = {
             pageSize: pageSize.value,
-            search: searchQuery.value,
-            category: selectedCategory.value,
+            search: searchQuery.value ? searchQuery.value : undefined,
+            category: selectedCategory.value ? selectedCategory.value : undefined,
+            page: page? page : currentPage.value,
+            cursor,
+            direction,
         };
 
         const result = await postStore.fetchPosts(params);
@@ -161,16 +192,20 @@ const fetchPosts = async () => {
                 ...post,
                 loaded: false,
             }));
+
+            // 更新分页信息
+            if (result.pagination.totalCount !== undefined) {
+                totalPosts.value = result.pagination.totalCount;
+            }
+            hasMore.value = result.pagination.hasNextPage;
+
+            // 如果是第一页，更新分类和标签
+            if (page === 1) {
+                categories.value = result.posts.map(post => post.category).filter((category): category is { id: string; name: string } => category !== undefined) || [];
+                tags.value = result.posts.flatMap(post => post.tags || []).map(tag => tag.name) || [];
+            }
         } else {
             displayedPosts.value = [];
-        }
-
-        totalPosts.value = result.total;
-        hasMore.value = currentPage.value < Math.ceil(result.total / pageSize.value);
-
-        if (currentPage.value === 1) {
-            categories.value = result.categories || [];
-            tags.value = result.tags || [];
         }
     } catch (error) {
         console.error('Failed to fetch posts:', error);
@@ -178,7 +213,6 @@ const fetchPosts = async () => {
         loading.value = false;
     }
 };
-
 // 切换分类下拉菜单
 const toggleCategoryDropdown = () => {
     showCategoryDropdown.value = !showCategoryDropdown.value;
@@ -197,15 +231,6 @@ const goToPost = (id: string) => {
     postStore.getPostById(id).then(() => {
         router.push(`/blog/${id}`);
     });
-};
-
-// 切换页面
-const changePage = (page: number) => {
-    if (page < 1 || (page > totalPages.value && totalPages.value > 0)) return;
-    currentPage.value = page;
-    fetchPosts();
-    // 滚动到顶部
-    window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 // 初始化
@@ -236,16 +261,19 @@ onMounted(() => {
 .timeline-view {
     padding: 20px;
 }
+
 .timeline {
     position: relative;
     margin-left: 20px;
     border-left: 2px solid #ccc;
 }
+
 .timeline-item {
     position: relative;
     padding: 10px 0 10px 20px;
     margin-bottom: 15px;
 }
+
 .timeline-item .circle {
     position: absolute;
     left: -11px;
@@ -255,10 +283,12 @@ onMounted(() => {
     background-color: #42b983;
     border-radius: 50%;
 }
+
 .timeline-item .item-content h4 {
     margin: 0;
     font-size: 16px;
 }
+
 .timeline-item .item-content span {
     color: #888;
     font-size: 14px;

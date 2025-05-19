@@ -1,18 +1,18 @@
 import { defineStore } from 'pinia';
 import http, { handleAxiosError } from "@/utils/http";
 
-// 类型定义
 export interface Post {
   id: string;
   title: string;
-  excerpt: string;
+  excerpt?: string;
   createdAt: string;
   updatedAt?: string;
-  category: string;
-  views: number;
-  likes: number;
+  categoryId?: string;
+  category?: { id: string; name: string }; 
+  views?: number;
+  likes?: number;
   content?: string;
-  tags?: string[];
+  tags?: { id: string; name: string }[];
 }
 
 export interface LoadablePost extends Post {
@@ -22,18 +22,26 @@ export interface LoadablePost extends Post {
 export interface PostQueryParams {
   page?: number;
   pageSize?: number;
-  lastId?: number | null;
-  limit?: number;
   search?: string;
   category?: string;
   isTimeline?: boolean;
+  cursor?: string;
+  direction?: 'next' | 'prev';
+}
+
+export interface Pagination {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+  nextCursor?: { createdAt: string; id: string } | null;
+  prevCursor?: { createdAt: string; id: string } | null;
 }
 
 export interface PostQueryResult {
   posts: Post[];
-  total: number;
-  categories?: { id: string; name: string; count: number }[];
-  tags?: string[];
+  pagination: Pagination;
 }
 
 export interface IntersectionObserverValue {
@@ -45,23 +53,25 @@ export const usePostStore = defineStore('post', {
   state: () => ({
     postsCache: new Map<string, Post>(),
     queryResultsCache: new Map<string, PostQueryResult>(),
+    pagination: {currentPage: 1, totalPages: 0, totalCount: 0, hasNextPage: false, hasPrevPage: false} as Pagination,
   }),
   
   actions: {
     async fetchPosts(params: PostQueryParams): Promise<PostQueryResult> {
       const cacheKey = this.generateCacheKey(params);
-      const cachedResult = this.queryResultsCache.get(cacheKey);
-
-      if (cachedResult) {
-        return cachedResult;
-      }
-
       try {
         const response = await http.get(`/post`, { params });
         const result: PostQueryResult = response.data;
 
         this.queryResultsCache.set(cacheKey, result);
         result.posts.forEach(post => this.postsCache.set(post.id, post));
+        this.pagination = {
+          ...this.pagination,
+          ...result.pagination,
+          prevCursor: result.pagination.prevCursor,
+          nextCursor: result.pagination.nextCursor,
+        };
+        console.log(this.pagination);
         return result;
       } catch (error) {
         handleAxiosError(error);
@@ -89,6 +99,10 @@ export const usePostStore = defineStore('post', {
     clearCache() {
       this.postsCache.clear();
       this.queryResultsCache.clear();
+      this.pagination = {currentPage: 1, totalPages: 0, totalCount: 0, hasNextPage: false, hasPrevPage: false} as Pagination;
+    },
+    setCurrentPage(page: number) {
+      this.pagination.currentPage = page;
     },
   },
 });
