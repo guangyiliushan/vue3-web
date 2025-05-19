@@ -22,7 +22,7 @@ export const useAuthStore = defineStore("auth", {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          throw "No token found";
+          throw new Error("No token found");
         }
         const resp = await http.get<{ user: User | null }>("/user/me");
         this.user = resp.data.user;
@@ -31,6 +31,7 @@ export const useAuthStore = defineStore("auth", {
         this.user = null;
         localStorage.removeItem("user");
         console.error(handleAxiosError(err));
+        alert("无法获取用户信息，请重新登录。");
       } finally {
         this.loading = false;
       }
