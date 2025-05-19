@@ -1,18 +1,16 @@
 <template>
   <div class="timeline-view">
+    <div>
+      <category-dropdown @category-selected="selectCategory" />
+    </div>
     <div class="timeline">
-      <div
-        v-for="post in displayedPosts"
-        :key="post.id"
-        class="timeline-item"
-        v-intersection-observer="{ callback: () => loadPostContent(post) }"
-      >
+      <div v-for="post in displayedPosts" :key="post.id" class="timeline-item">
         <div class="circle"></div>
         <div class="item-content">
-          <a :href="`/post/${post.id}`">
-          <h4>{{ post.title }}</h4>
-          <span v-if="post.loaded">{{ post.createdAt }}</span>
-          <span v-else class="loading-placeholder">加载中...</span>
+          <a @click="goToPost(post.id)">
+            <h4>{{ post.title }}</h4>
+            <span v-if="post.loaded">{{ new Date(post.createdAt).toLocaleString() }}</span>
+            <span v-else class="loading-placeholder">加载中...</span>
           </a>
         </div>
       </div>
@@ -24,49 +22,24 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { usePostStore } from '@/stores/post';
-import type { LoadablePost, IntersectionObserverValue } from '@/stores/post';
-import type { Directive, DirectiveBinding } from 'vue';
+import CategoryDropdown from '@/components/CategoryDropdown.vue';
+import type { LoadablePost } from '@/stores/post';
+
+const router = useRouter();
 
 // 数据和状态
 const postStore = usePostStore();
 const displayedPosts = ref<LoadablePost[]>([]);
-const currentPage = ref(1);
-const pageSize = ref(20);
 const loading = ref(false);
 const hasMore = ref(true);
 const totalPosts = ref(0);
+const selectedCategory = ref('');
 
-// 交叉观察器指令
-const vIntersectionObserver: Directive<HTMLElement, IntersectionObserverValue> = {
-  mounted(el: HTMLElement, binding: DirectiveBinding<IntersectionObserverValue>) {
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        binding.value.callback();
-        observer.unobserve(el);
-      }
-    }, {
-      threshold: 0.1,
-    });
-    observer.observe(el);
-  },
-};
-
-// 加载文章内容
-const loadPostContent = async (post: LoadablePost) => {
-  if (post.loaded) return;
-
-  try {
-    const fullPost = await postStore.getPostById(post.id);
-    if (fullPost) {
-      Object.assign(post, {
-        ...fullPost,
-        loaded: true,
-      });
-    }
-  } catch (error) {
-    console.error(`Failed to load post ${post.id}:`, error);
-  }
+const selectCategory = (categoryId: string) => {
+    selectedCategory.value = selectedCategory.value === categoryId ? '' : categoryId;
+    fetchPosts();
 };
 
 // 查询文章列表
@@ -76,29 +49,35 @@ const fetchPosts = async () => {
   loading.value = true;
   try {
     const params = {
-      page: currentPage.value,
-      pageSize: pageSize.value,
-      isTimeline: true,
+      category: selectedCategory.value,
+      timeline: true,
     };
 
     const result = await postStore.fetchPosts(params);
-
+    console.log('Fetched posts:', result);
     if (result.posts.length > 0) {
       displayedPosts.value = result.posts.map((post) => ({
         ...post,
-        loaded: false,
+        loaded: true,
       }));
     } else {
       displayedPosts.value = [];
     }
 
-    totalPosts.value = result.total;
-    hasMore.value = currentPage.value < Math.ceil(result.total / pageSize.value);
+    totalPosts.value = result.posts.length;
   } catch (error) {
     console.error('Failed to fetch posts:', error);
   } finally {
     loading.value = false;
   }
+};
+
+// 跳转到文章详情页
+const goToPost = (id: string) => {
+    // 跳转前先尝试预加载文章内容
+    postStore.getPostById(id).then(() => {
+        router.push(`/blog/${id}`);
+    });
 };
 
 // 初始化
@@ -111,16 +90,19 @@ onMounted(() => {
 .timeline-view {
   padding: 20px;
 }
+
 .timeline {
   position: relative;
   margin-left: 20px;
   border-left: 2px solid #ccc;
 }
+
 .timeline-item {
   position: relative;
   padding: 10px 0 10px 20px;
   margin-bottom: 15px;
 }
+
 .timeline-item .circle {
   position: absolute;
   left: -11px;
@@ -130,25 +112,30 @@ onMounted(() => {
   background-color: #42b983;
   border-radius: 50%;
 }
+
 .timeline-item .item-content h4 {
   margin: 0;
   font-size: 16px;
 }
+
 .timeline-item .item-content span {
   color: #888;
   font-size: 14px;
 }
+
 .loading {
   text-align: center;
   padding: 1rem;
   margin-top: 10px;
 }
+
 .end-message {
   text-align: center;
   padding: 1rem;
   color: #888;
   margin-top: 10px;
 }
+
 .pagination-controls {
   display: flex;
   justify-content: center;
@@ -156,6 +143,7 @@ onMounted(() => {
   gap: 15px;
   align-items: center;
 }
+
 .pagination-controls button {
   padding: 8px 16px;
   background-color: #42b983;
@@ -164,10 +152,12 @@ onMounted(() => {
   border-radius: 4px;
   cursor: pointer;
 }
+
 .pagination-controls button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
+
 .loading-placeholder {
   color: #888;
   font-style: italic;

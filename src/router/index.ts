@@ -9,6 +9,7 @@ import UserView from '@/views/User.vue'
 import ChangePasswordView from '@/views/ChangeUserInfo.vue'
 import ChangeEmailView from '@/views/ChangeUserInfo.vue'
 import BlogDiscoverView from '@/views/BlogDiscover.vue'
+import BlogTimeline from '@/views/BlogTimeline.vue'
 import BlogView from '@/views/BlogPost.vue'
 
 const routes = [
@@ -20,7 +21,8 @@ const routes = [
   { path: '/user/:id', name: 'User', component: UserView },
   { path: '/user/change/password', name: 'ChangePassword', component: ChangePasswordView },
   { path: '/user/change/email', name: 'ChangeEmail', component: ChangeEmailView },
-  { path: '/blog', name: 'BlogDiscover', component: BlogDiscoverView },
+  { path: '/blog/discover', name: 'BlogDiscover', component: BlogDiscoverView },
+  { path: '/blog/timeline', name: 'BlogTimeline', component: BlogTimeline },
   { path: '/blog/:id', name: 'BlogPost', component: BlogView },
 ]
 

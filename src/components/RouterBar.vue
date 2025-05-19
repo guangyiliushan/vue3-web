@@ -5,6 +5,8 @@
       <RouterLink to="/about">About</RouterLink>
       <RouterLink to="/blog">Blog</RouterLink>
       <RouterLink to="/dashboard">Dashboard</RouterLink>
+      <RouterLink to="/blog/discover">Discover</RouterLink>
+      <RouterLink to="/blog/timeline">Timeline</RouterLink>
     </div>
     <div v-if="auth.isAuthenticated">
       <RouterLink :to="`/user/${auth.user?.id}`">User</RouterLink>

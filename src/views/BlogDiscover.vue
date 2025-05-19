@@ -5,19 +5,8 @@
         </div>
         <div class="content">
             <div>
-                <div>
-                    <button @click="toggleCategoryDropdown">Categories</button>
-                    <div v-if="showCategoryDropdown" class="dropdown">
-                        <ul>
-                            <li @click="selectCategory('')">All</li>
-                            <li v-for="category in categories" :key="category.id" @click="selectCategory(category.id)">
-                                {{ category.name }}
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+                <category-dropdown @category-selected="selectCategory" />
             </div>
-
             <!-- 列表视图 -->
             <main class="posts">
                 <div class="post-list">
@@ -27,8 +16,8 @@
                             <h3>{{ post.title }}</h3>
                             <p>{{ post.excerpt }}</p>
                             <p v-if="post.loaded">
-                                <strong>Published:</strong> {{ post.createdAt }} |
-                                <strong>Category:</strong> {{ post.category }} |
+                                <strong>Published:</strong> {{ new Date(post.createdAt).toLocaleString() }} |
+                                <strong>Category:</strong> {{ post.category?.name }} |
                                 <strong>Views:</strong> {{ post.views }} |
                                 <strong>Likes:</strong> {{ post.likes }}
                             </p>
@@ -54,7 +43,6 @@
                 <aside class="sidebar">
                     <h3>Statistics</h3>
                     <p>Total Posts: {{ totalPosts }}</p>
-                    <p>Total Tags: {{ tags.length }}</p>
                 </aside>
             </div>
         </div>
@@ -67,13 +55,13 @@ import { useRouter } from 'vue-router';
 import type { LoadablePost, IntersectionObserverValue } from '@/stores/post';
 import { usePostStore } from '@/stores/post';
 import type { Directive, DirectiveBinding } from 'vue';
+import CategoryDropdown from '@/components/CategoryDropdown.vue';
 
 const router = useRouter();
 const postStore = usePostStore();
 
 // 查询参数
 const searchQuery = ref('');
-const showCategoryDropdown = ref(false);
 const selectedCategory = ref('');
 const nextCursor = computed(() => postStore.pagination.nextCursor);
 const prevCursor = computed(() => postStore.pagination.prevCursor);
@@ -88,10 +76,6 @@ const loading = ref(false);
 const hasMore = ref(true);
 const totalPosts = ref(0);
 const totalPages = computed(() => Math.ceil(totalPosts.value / pageSize.value));
-
-// 分类和标签
-const categories = ref<{ id: string; name: string }[]>([]);
-const tags = ref<string[]>([]);
 
 // 交叉观察器指令，用于检测元素是否进入视口
 const vIntersectionObserver: Directive<HTMLElement, IntersectionObserverValue> = {
@@ -134,7 +118,6 @@ const handleSearchInput = () => {
     if (searchTimeout) {
         clearTimeout(searchTimeout);
     }
-
     searchTimeout = window.setTimeout(() => {
         resetSearch();
     }, 300);
@@ -198,12 +181,6 @@ const fetchPosts = async (page?: number, cursor?: string, direction?: string) =>
                 totalPosts.value = result.pagination.totalCount;
             }
             hasMore.value = result.pagination.hasNextPage;
-
-            // 如果是第一页，更新分类和标签
-            if (page === 1) {
-                categories.value = result.posts.map(post => post.category).filter((category): category is { id: string; name: string } => category !== undefined) || [];
-                tags.value = result.posts.flatMap(post => post.tags || []).map(tag => tag.name) || [];
-            }
         } else {
             displayedPosts.value = [];
         }
@@ -213,16 +190,10 @@ const fetchPosts = async (page?: number, cursor?: string, direction?: string) =>
         loading.value = false;
     }
 };
-// 切换分类下拉菜单
-const toggleCategoryDropdown = () => {
-    showCategoryDropdown.value = !showCategoryDropdown.value;
-};
-
 // 选择分类
 const selectCategory = (categoryId: string) => {
     selectedCategory.value = selectedCategory.value === categoryId ? '' : categoryId;
     resetSearch();
-    showCategoryDropdown.value = false;
 };
 
 // 跳转到文章详情页

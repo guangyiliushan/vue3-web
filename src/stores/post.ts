@@ -8,7 +8,7 @@ export interface Post {
   createdAt: string;
   updatedAt?: string;
   categoryId?: string;
-  category?: { id: string; name: string }; 
+  category?: { id: string; name: string };
   views?: number;
   likes?: number;
   content?: string;
@@ -24,7 +24,7 @@ export interface PostQueryParams {
   pageSize?: number;
   search?: string;
   category?: string;
-  isTimeline?: boolean;
+  timeline?: boolean;
   cursor?: string;
   direction?: 'next' | 'prev';
 }
@@ -52,10 +52,12 @@ export interface IntersectionObserverValue {
 export const usePostStore = defineStore('post', {
   state: () => ({
     postsCache: new Map<string, Post>(),
+    categories: [] as { id: string; name: string }[],
+    tags: [] as { id: string; name: string }[],
     queryResultsCache: new Map<string, PostQueryResult>(),
-    pagination: {currentPage: 1, totalPages: 0, totalCount: 0, hasNextPage: false, hasPrevPage: false} as Pagination,
+    pagination: { currentPage: 1, totalPages: 0, totalCount: 0, hasNextPage: false, hasPrevPage: false } as Pagination,
   }),
-  
+
   actions: {
     async fetchPosts(params: PostQueryParams): Promise<PostQueryResult> {
       const cacheKey = this.generateCacheKey(params);
@@ -71,9 +73,30 @@ export const usePostStore = defineStore('post', {
           prevCursor: result.pagination.prevCursor,
           nextCursor: result.pagination.nextCursor,
         };
-        console.log(this.pagination);
         return result;
       } catch (error) {
+        handleAxiosError(error);
+      }
+    },
+    async getCategories(forceRefresh = false): Promise<{ id: string; name: string }[]> {
+      if (!forceRefresh && this.categories.length > 0) {
+        return this.categories;
+      }
+
+      try {
+        const response = await http.get<{ id: string; name: string }[]>(`/post/categories`);
+        this.categories = response.data;
+        return this.categories;
+      } catch (error) {
+        handleAxiosError(error);
+      }
+    },
+    async getTags(): Promise<void> {
+      try {
+        const response = await http.get(`/post/tags`);
+        this.tags = response.data;
+      }
+      catch (error) {
         handleAxiosError(error);
       }
     },
@@ -93,13 +116,13 @@ export const usePostStore = defineStore('post', {
     },
 
     generateCacheKey(params: PostQueryParams): string {
-      return `${params.search || ''}_${params.category || ''}_${params.isTimeline ? 'timeline' : 'list'}`;
+      return `${params.search || ''}_${params.category || ''}_${params.timeline ? 'timeline' : 'list'}`;
     },
 
     clearCache() {
       this.postsCache.clear();
       this.queryResultsCache.clear();
-      this.pagination = {currentPage: 1, totalPages: 0, totalCount: 0, hasNextPage: false, hasPrevPage: false} as Pagination;
+      this.pagination = { currentPage: 1, totalPages: 0, totalCount: 0, hasNextPage: false, hasPrevPage: false } as Pagination;
     },
     setCurrentPage(page: number) {
       this.pagination.currentPage = page;

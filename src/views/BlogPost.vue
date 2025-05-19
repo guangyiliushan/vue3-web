@@ -3,7 +3,7 @@
     <div class="content-wrapper">
       <div class="main-content">
         <h1>{{ post.title }}</h1>
-        <div class="meta">{{ post.createdAt }} | 分类: {{ post.category }} | 浏览量: {{ post.views }} | 字数: {{ wordCount }}</div>
+        <div class="meta">{{ new Date(post.createdAt).toLocaleString() }} | 分类: {{ post.category?.name }} | 浏览量: {{ post.views }} | 字数: {{ wordCount }}</div>
         <div class="post-container" ref="postContainer" @scroll="onScroll">
           <article v-html="renderedHtml"></article>
           <div class="comments">
@@ -35,6 +35,7 @@
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownIt from 'markdown-it'
+import { katex } from "@mdit/plugin-katex";
 import { usePostStore, type Post } from '@/stores/post'
 
 // 定义目录项接口
@@ -121,7 +122,7 @@ const fetchPostById = async (id: string) => {
   if (data) {
     Object.assign(post, data);
     likes.value = post.likes || 0;
-    const md = new MarkdownIt();
+    const md = new MarkdownIt().use(katex);
     renderedHtml.value = md.render(post.content || '');
     readingTime.value = generateReadingTime(post.content || '');
     wordCount.value = (post.content || '').trim().split(/\s+/).length;
