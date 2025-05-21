@@ -62,8 +62,8 @@ export const usePostStore = defineStore('post', {
     async fetchPosts(params: PostQueryParams): Promise<PostQueryResult> {
       const cacheKey = this.generateCacheKey(params);
       try {
-        const response = await http.get(`/post`, { params });
-        const result: PostQueryResult = response.data;
+        const response = await http.get(`/posts`, { params });
+        const result: PostQueryResult = response.data.data; 
 
         this.queryResultsCache.set(cacheKey, result);
         result.posts.forEach(post => this.postsCache.set(post.id, post));
@@ -84,8 +84,8 @@ export const usePostStore = defineStore('post', {
       }
 
       try {
-        const response = await http.get<{ id: string; name: string }[]>(`/post/categories`);
-        this.categories = response.data;
+        const response = await http.get(`/posts/categories`);
+        this.categories = response.data.data; 
         return this.categories;
       } catch (error) {
         handleAxiosError(error);
@@ -93,8 +93,8 @@ export const usePostStore = defineStore('post', {
     },
     async getTags(): Promise<void> {
       try {
-        const response = await http.get(`/post/tags`);
-        this.tags = response.data;
+        const response = await http.get(`/posts/tags`);
+        this.tags = response.data.data; 
       }
       catch (error) {
         handleAxiosError(error);
@@ -106,8 +106,8 @@ export const usePostStore = defineStore('post', {
       if (cachedPost && cachedPost.content) return cachedPost;
 
       try {
-        const response = await http.get(`/post/${id}`);
-        const post: Post = response.data;
+        const response = await http.get(`/posts/${id}`);
+        const post: Post = response.data.data; 
         this.postsCache.set(id, post);
         return post;
       } catch (error) {
