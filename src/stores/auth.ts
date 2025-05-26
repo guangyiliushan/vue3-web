@@ -122,7 +122,7 @@ export const useAuthStore = defineStore("auth", {
     },
     async sendEmailCode(email: string) {
       try {
-        await http.put("/verify/email", {
+        await http.put("/verify/send/email", {
           user: {
             id: this.user?.id || 'register',
           },
