@@ -39,8 +39,8 @@
                 <button :disabled="!hasNextPage" @click="nextPage">下一页</button>
             </div>
 
-            <div>
-                <aside class="sidebar">
+            <div class="sidebar">
+                <aside>
                     <h3>Statistics</h3>
                     <p>Total Posts: {{ totalPosts }}</p>
                 </aside>
