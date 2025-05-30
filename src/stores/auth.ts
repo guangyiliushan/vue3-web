@@ -24,8 +24,8 @@ export const useAuthStore = defineStore("auth", {
         if (!token) {
           throw new Error("No token found");
         }
-        const resp = await http.get<{ user: User | null }>("/user/me");
-        this.user = resp.data.user;
+        const resp = await http.get<{ data: { user: User | null } }>("/users/me");
+        this.user = resp.data.data.user;
         localStorage.setItem("user", JSON.stringify(this.user));
       } catch (err) {
         this.user = null;
@@ -38,20 +38,20 @@ export const useAuthStore = defineStore("auth", {
     },
     async getSalt(email: string) {
       try {
-        const resp = await http.post("/user/salt", { email });
-        return resp.data.salt;
+        const resp = await http.post<{ data: { salt: string } }>("/users/salt", { email });
+        return resp.data.data.salt;
       } catch (err: any) {
         handleAxiosError(err);
       }
     },
     async login(email: string, password: string) {
       try {
-        const resp = await http.post("/user/login", { email, password });
-        localStorage.setItem("token", resp.data.token);
-        localStorage.setItem("refreshToken", resp.data.refreshToken);
+        const resp = await http.post<{ data: { token: string; refreshToken: string } }>("/users/login", { email, password });
+        localStorage.setItem("token", resp.data.data.token);
+        localStorage.setItem("refreshToken", resp.data.data.refreshToken);
         this.loading = true;
         await this.fetchUser();
-        return resp.data;
+        return resp.data.data;
       } catch (err: any) {
         handleAxiosError(err);
       }
@@ -66,7 +66,7 @@ export const useAuthStore = defineStore("auth", {
     },
     async register(email: string, password: string, salt: string, verifyCode: string) {
       try {
-        const resp = await http.post("/user/register", {
+        const resp = await http.post("/users/register", {
           email,
           password,
           salt,
@@ -79,7 +79,7 @@ export const useAuthStore = defineStore("auth", {
     },
     async updateUsername(newUsername: string) {
       try {
-        await http.put("/user/update/username", {
+        await http.put("/users/update/username", {
           user: {
             id: this.user?.id,
             username: newUsername,
@@ -92,7 +92,7 @@ export const useAuthStore = defineStore("auth", {
     },
     async updateEmail(oldEmailCode: string, password: string, newEmail: string, newEmailCode: string) {
       try {
-        await http.put('/user/update/email', {
+        await http.put('/users/update/email', {
           user: {
             id: this.user?.id,
             oldEmailCode: oldEmailCode,
@@ -107,7 +107,7 @@ export const useAuthStore = defineStore("auth", {
     },
     async updatePassword(oldPassword: string, verifyCode: string, newPassword: string, newSalt: string) {
       try {
-        await http.put("/user/update/password", {
+        await http.put("/users/update/password", {
           user:{
           id: this.user?.id,
           oldPassword: oldPassword,
@@ -122,7 +122,7 @@ export const useAuthStore = defineStore("auth", {
     },
     async sendEmailCode(email: string) {
       try {
-        await http.put("/verify/email", {
+        await http.put("/verify/email/send", {
           user: {
             id: this.user?.id || 'register',
           },

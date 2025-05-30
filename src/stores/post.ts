@@ -47,6 +47,15 @@ export interface PostQueryResult {
 export interface IntersectionObserverValue {
   callback: () => void;
 }
+export interface CacheEntry {
+  timestamp: number;          // 缓存时间戳
+  result: PostQueryResult;    // 缓存的查询结果
+  timeRange?: {               // 该查询覆盖的时间范围
+    start: string;            // 最早的文章创建时间
+    end: string;              // 最新的文章创建时间
+  };
+  postIds: Set<string>;       // 该查询包含的文章ID集合
+}
 
 // 创建文章存储
 export const usePostStore = defineStore('post', {
@@ -54,7 +63,9 @@ export const usePostStore = defineStore('post', {
     postsCache: new Map<string, Post>(),
     categories: [] as { id: string; name: string }[],
     tags: [] as { id: string; name: string }[],
-    queryResultsCache: new Map<string, PostQueryResult>(),
+    queryResultsCache: new Map<string, CacheEntry>(),
+    updatedPostIds: new Set<string>(), 
+    lastTimelineCheck: 0,
     pagination: { currentPage: 1, totalPages: 0, totalCount: 0, hasNextPage: false, hasPrevPage: false } as Pagination,
   }),
 
@@ -62,10 +73,27 @@ export const usePostStore = defineStore('post', {
     async fetchPosts(params: PostQueryParams): Promise<PostQueryResult> {
       const cacheKey = this.generateCacheKey(params);
       try {
-        const response = await http.get(`/post`, { params });
-        const result: PostQueryResult = response.data;
+        const response = await http.get(`/posts`, { params });
+        const result: PostQueryResult = response.data.data; 
 
-        this.queryResultsCache.set(cacheKey, result);
+        const postIds = new Set(result.posts.map(post => post.id));
+        let timeRange;
+        
+        if (result.posts.length > 0) {
+          const dates = result.posts.map(post => new Date(post.createdAt).getTime());
+          timeRange = {
+            start: result.posts[result.posts.length - 1].createdAt,
+            end: result.posts[0].createdAt
+          };
+        }
+
+        this.queryResultsCache.set(cacheKey, {
+          timestamp: Date.now(),
+          result,
+          timeRange,
+          postIds
+        });
+
         result.posts.forEach(post => this.postsCache.set(post.id, post));
         this.pagination = {
           ...this.pagination,
@@ -84,8 +112,8 @@ export const usePostStore = defineStore('post', {
       }
 
       try {
-        const response = await http.get<{ id: string; name: string }[]>(`/post/categories`);
-        this.categories = response.data;
+        const response = await http.get(`/posts/categories`);
+        this.categories = response.data.data; 
         return this.categories;
       } catch (error) {
         handleAxiosError(error);
@@ -93,8 +121,8 @@ export const usePostStore = defineStore('post', {
     },
     async getTags(): Promise<void> {
       try {
-        const response = await http.get(`/post/tags`);
-        this.tags = response.data;
+        const response = await http.get(`/posts/tags`);
+        this.tags = response.data.data; 
       }
       catch (error) {
         handleAxiosError(error);
@@ -106,8 +134,8 @@ export const usePostStore = defineStore('post', {
       if (cachedPost && cachedPost.content) return cachedPost;
 
       try {
-        const response = await http.get(`/post/${id}`);
-        const post: Post = response.data;
+        const response = await http.get(`/posts/${id}`);
+        const post: Post = response.data.data; 
         this.postsCache.set(id, post);
         return post;
       } catch (error) {
@@ -122,8 +150,10 @@ export const usePostStore = defineStore('post', {
     clearCache() {
       this.postsCache.clear();
       this.queryResultsCache.clear();
+      this.updatedPostIds.clear();
       this.pagination = { currentPage: 1, totalPages: 0, totalCount: 0, hasNextPage: false, hasPrevPage: false } as Pagination;
     },
+    
     setCurrentPage(page: number) {
       this.pagination.currentPage = page;
     },

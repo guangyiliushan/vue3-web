@@ -6,13 +6,13 @@
     <div class="timeline">
       <div v-for="post in displayedPosts" :key="post.id" class="timeline-item">
         <div class="circle"></div>
-        <div class="item-content">
-          <a @click="goToPost(post.id)">
+        <a @click="goToPost(post.id)">
+          <div class="item-content">
             <h4>{{ post.title }}</h4>
             <span v-if="post.loaded">{{ new Date(post.createdAt).toLocaleString() }}</span>
             <span v-else class="loading-placeholder">加载中...</span>
-          </a>
-        </div>
+          </div>
+        </a>
       </div>
       <div v-if="loading" class="loading">加载中...</div>
       <div v-if="!hasMore && displayedPosts.length > 0" class="end-message">已加载全部文章</div>
@@ -38,8 +38,8 @@ const totalPosts = ref(0);
 const selectedCategory = ref('');
 
 const selectCategory = (categoryId: string) => {
-    selectedCategory.value = selectedCategory.value === categoryId ? '' : categoryId;
-    fetchPosts();
+  selectedCategory.value = selectedCategory.value === categoryId ? '' : categoryId;
+  fetchPosts();
 };
 
 // 查询文章列表
@@ -74,10 +74,10 @@ const fetchPosts = async () => {
 
 // 跳转到文章详情页
 const goToPost = (id: string) => {
-    // 跳转前先尝试预加载文章内容
-    postStore.getPostById(id).then(() => {
-        router.push(`/blog/${id}`);
-    });
+  // 跳转前先尝试预加载文章内容
+  postStore.getPostById(id).then(() => {
+    router.push(`/blog/${id}`);
+  });
 };
 
 // 初始化
