@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { usePostStore } from '@/stores/post';
 
 // 定义 emit，用于触发事件
@@ -37,4 +37,8 @@ const selectCategory = (categoryId: string) => {
   showDropdown.value = false;
   emit('category-selected', categoryId);
 };
+
+onMounted(() => {
+  postStore.getCategories(); 
+})
 </script>

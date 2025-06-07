@@ -8,14 +8,14 @@ if (!auth.user && auth.loading) {
 </script>
 
 <template>
-  <div class="bg-base-100 h-screen flex flex-col">
-    <nav class="sticky top-0 w-full">
+  <div class="bg-base-100 min-h-screen flex flex-col">
+    <nav class="sticky top-0 w-full z-50">
       <router-bar />
     </nav>
     
-    <p class="container w-full px-4 py-2 text-sm opacity-70">
+    <!-- <p class="container w-full px-4 py-2 text-sm opacity-70">
       <strong>Current route path:</strong> {{ $route.fullPath }}
-    </p>
+    </p> -->
     
     <main class="container mx-auto flex-grow px-4 py-6">
       <RouterView />
