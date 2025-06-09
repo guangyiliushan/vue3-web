@@ -10,7 +10,7 @@
               {{ new Date(post.createdAt).toLocaleString() }} | 分类: {{ post.category?.name }} | 浏览量: {{ post.views }} | 字数: {{ wordCount }}
             </div>
             <div class="divider"></div>
-            <div class="post-container text-left h-[70vh] overflow-y-auto prose prose-lg max-w-none" ref="postContainer" @scroll="onScroll">
+            <div class="post-container text-left h-[63vh] overflow-y-auto prose prose-lg max-w-none" ref="postContainer" @scroll="onScroll">
               <article v-html="renderedHtml"></article>
               <div class="comments mt-8">
                 <div class="divider">评论区</div>
@@ -72,6 +72,7 @@ import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownIt from 'markdown-it'
 import { katex } from "@mdit/plugin-katex";
+import { attrs } from "@mdit/plugin-attrs";
 import { usePostStore, type Post } from '@/stores/post'
 
 // 定义目录项接口
@@ -117,7 +118,18 @@ function buildTOC(): void {
   const list: TocItem[] = []
   headings.forEach((h: Element, index: number) => {
     if (!h.id) {
-      h.id = h.textContent?.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') || `heading-${index}`
+      let id = h.textContent?.trim()
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\u4e00-\u9fa5-]/g, '')
+        .replace(/^[\d-]+/, '')
+        || `heading-${index}`
+      
+      if (!id || /^[\d-]/.test(id)) {
+        id = `heading-${index}`
+      }
+      
+      h.id = id
     }
     list.push({ 
       id: h.id, 
@@ -130,18 +142,29 @@ function buildTOC(): void {
 
 function scrollTo(id: string): void {
   if (!postContainer.value) return;
-  const el = postContainer.value.querySelector(`#${id}`)
-  if (el) {
-    // 计算目标元素相对于容器的位置
-    const containerRect = postContainer.value.getBoundingClientRect()
-    const targetRect = el.getBoundingClientRect()
-    const scrollTop = postContainer.value.scrollTop
-    const targetOffsetTop = targetRect.top - containerRect.top + scrollTop - 20 // 添加20px的偏移量
-    
-    postContainer.value.scrollTo({ 
-      top: targetOffsetTop, 
-      behavior: 'smooth' 
-    })
+  
+  // 添加ID验证，确保是有效的CSS选择器
+  if (!id || /^[\d-]/.test(id)) {
+    console.warn('Invalid ID for scrollTo:', id)
+    return
+  }
+  
+  try {
+    const el = postContainer.value.querySelector(`#${CSS.escape(id)}`)
+    if (el) {
+      // 计算目标元素相对于容器的位置
+      const containerRect = postContainer.value.getBoundingClientRect()
+      const targetRect = el.getBoundingClientRect()
+      const scrollTop = postContainer.value.scrollTop
+      const targetOffsetTop = targetRect.top - containerRect.top + scrollTop - 20 // 添加20px的偏移量
+      
+      postContainer.value.scrollTo({ 
+        top: targetOffsetTop, 
+        behavior: 'smooth' 
+      })
+    }
+  } catch (error) {
+    console.error('Error in scrollTo:', error)
   }
 }
 
@@ -204,31 +227,90 @@ const fetchPostById = async (id: string) => {
       html: true,
       linkify: true,
       typographer: true,
-    }).use(katex);
+    })
+    .use(katex)
+    .use(attrs);
     
     // 添加类到表格
     md.renderer.rules.table_open = () => '<table class="table table-zebra w-full">\n';
     
-    // 添加类到图片
-    const defaultImageRenderer = md.renderer.rules.image || function(tokens, idx, options, self) {
-      return self.renderToken(tokens, idx, options);
-    };
-    md.renderer.rules.image = (tokens, idx, options, env, self) => {
+    md.renderer.rules.fence = (tokens, idx) => {
       const token = tokens[idx];
+      const info = token.info ? token.info.trim() : '';
+      const langName = info ? info.split(/\s+/g)[0] : 'text';
+      const langDisplay = langName.toUpperCase();
+
+      // 使用 @mdit/plugin-attrs 的属性处理
       const aIndex = token.attrIndex('class');
+      let codeClass = `mockup-code bg-base-200 text-base-content overflow-x-auto language-${langName}`;
+      
       if (aIndex < 0) {
-        token.attrPush(['class', 'rounded-lg max-w-full h-auto']);
+        token.attrPush(['class', codeClass]);
+      } else {
+        const existingClass = token.attrGet('class') || '';
+        token.attrSet('class', `${existingClass} ${codeClass}`.trim());
       }
-      return defaultImageRenderer(tokens, idx, options, env, self);
+      
+      // 添加数据属性用于语言标识
+      if (langName) {
+        token.attrPush(['data-lang', langName]);
+        token.attrPush(['data-ext', langName]);
+        token.attrPush(['data-title', langDisplay]);
+      }
+      
+      // 获取代码内容并转义HTML
+      const code = token.content;
+      const escapedCode = md.utils.escapeHtml(code);
+      
+      // 使用 DaisyUI 5.0.43 的样式返回自定义HTML结构
+      return `
+        <div class="code-block-wrapper mb-4">
+          <div class="bg-base-300 border border-base-300 rounded-lg overflow-hidden">
+            <div class="flex justify-between items-center px-4 py-2 bg-base-200 border-b border-base-300">
+              <span class="text-sm font-mono text-base-content opacity-70">${langDisplay}</span>
+              <button type="button" class="btn btn-xs btn-ghost copy-code-btn" onclick="copyCode(this)" aria-label="复制代码" title="复制代码">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span class="copy-text ml-1">复制</span>
+              </button>
+            </div>
+            <pre class="p-4 overflow-x-auto text-sm leading-6" data-prefix="$"><code class="language-${langName} text-base-content">${escapedCode}</code></pre>
+          </div>
+        </div>
+      `;
     };
-    
     renderedHtml.value = md.render(post.content || '');
     readingTime.value = generateReadingTime(post.content || '');
     wordCount.value = (post.content || '').trim().split(/\s+/).length;
     await nextTick();
+    addCopyFunctionality();
     buildTOC();
   }
 };
+
+// 添加复制代码功能
+function addCopyFunctionality() {
+  // 添加全局复制函数
+  (window as any).copyCode = async (button: HTMLButtonElement) => {
+    const codeBlock = button.parentElement?.querySelector('code');
+    if (codeBlock) {
+      const text = codeBlock.textContent || '';
+      try {
+        await navigator.clipboard.writeText(text);
+        const copyText = button.querySelector('.copy-text');
+        if (copyText) {
+          copyText.textContent = '已复制';
+          setTimeout(() => {
+            copyText.textContent = '复制';
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('复制失败:', err);
+      }
+    }
+  };
+}
 
 onMounted(async () => {
   const id = String(route.params.id)

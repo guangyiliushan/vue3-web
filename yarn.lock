@@ -228,6 +228,21 @@
   dependencies:
     "@types/markdown-it" "^14.1.2"
 
+"@mdit/helper@0.22.0":
+  version "0.22.0"
+  resolved "https://registry.yarnpkg.com/@mdit/helper/-/helper-0.22.0.tgz#c59b348a8cb98ae0ae73e11d9d3d4596442ec36a"
+  integrity sha512-2iJYa2PW59VhZgUYZKB88eYsq7Rn20gZbpe+Pnz3bRH/8goMA1YfbRM6oMhKSMX5C8IaK66IGutRJkHrRHhJEA==
+  dependencies:
+    "@types/markdown-it" "^14.1.2"
+
+"@mdit/plugin-attrs@^0.22.0":
+  version "0.22.0"
+  resolved "https://registry.yarnpkg.com/@mdit/plugin-attrs/-/plugin-attrs-0.22.0.tgz#5c6729832bf0cda1eceb780e834f471aa1cb2ba3"
+  integrity sha512-2lBb6tYDIEhExl0oC+lsi0ldy4zj/K2Nt/VqPZoUdqZVRh3+8uspRd687iZnIT7pL1q1Y3bKqFmyxvhyBtyrmA==
+  dependencies:
+    "@mdit/helper" "0.22.0"
+    "@types/markdown-it" "^14.1.2"
+
 "@mdit/plugin-katex@^0.18.0":
   version "0.18.0"
   resolved "https://registry.yarnpkg.com/@mdit/plugin-katex/-/plugin-katex-0.18.0.tgz#9fb2066bd5ee2a94b23c469eebc16d2a4067575c"
