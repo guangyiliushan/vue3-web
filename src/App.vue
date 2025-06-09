@@ -8,29 +8,26 @@ if (!auth.user && auth.loading) {
 </script>
 
 <template>
-  <nav>
-    <router-bar />
-  </nav>
-  <h1>Hello App!</h1>
-  <p>
-    <strong>Current route path:</strong> {{ $route.fullPath }}
-  </p>
-  <main>
-    <RouterView  />
-  </main>
+  <div class="bg-base-100 min-h-screen flex flex-col">
+    <nav class="sticky top-0 w-full z-50">
+      <router-bar />
+    </nav>
+    
+    <!-- <p class="container w-full px-4 py-2 text-sm opacity-70">
+      <strong>Current route path:</strong> {{ $route.fullPath }}
+    </p> -->
+    
+    <main class="container mx-auto flex-grow px-4 py-6">
+      <RouterView />
+    </main>
+    
+    <footer class="footer footer-center p-4 bg-base-200 text-base-content">
+      <div>
+        <p>Copyright © {{ new Date().getFullYear() }} - All rights reserved</p>
+      </div>
+    </footer>
+  </div>
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
 </style>

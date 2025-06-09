@@ -10,13 +10,18 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@iconify/vue": "^5.0.0",
+    "@mdit/plugin-attrs": "^0.22.0",
     "@mdit/plugin-katex": "^0.18.0",
+    "@tailwindcss/vite": "^4.1.8",
     "@types/crypto-js": "^4.2.2",
     "@types/markdown-it": "^14.1.2",
     "axios": "^1.8.4",
     "crypto-js": "^4.2.0",
+    "daisyui": "^5.0.43",
     "markdown-it": "^14.1.0",
     "pinia": "^3.0.2",
+    "tailwindcss": "^4.1.8",
     "vue": "^3.5.13",
     "vue-router": "4"
   },

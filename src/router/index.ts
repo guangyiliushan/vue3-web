@@ -11,6 +11,7 @@ import ChangeEmailView from '@/views/ChangeUserInfo.vue'
 import BlogDiscoverView from '@/views/BlogDiscover.vue'
 import BlogTimeline from '@/views/BlogTimeline.vue'
 import BlogView from '@/views/BlogPost.vue'
+import PortalView from '@/views/Portal.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: HomeView },
@@ -24,6 +25,7 @@ const routes = [
   { path: '/blog/discover', name: 'BlogDiscover', component: BlogDiscoverView },
   { path: '/blog/timeline', name: 'BlogTimeline', component: BlogTimeline },
   { path: '/blog/:id', name: 'BlogPost', component: BlogView },
+  { path: '/portal', name: 'Portal', component: PortalView }
 ]
 
 const router = createRouter({

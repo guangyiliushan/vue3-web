@@ -1,12 +1,49 @@
 <template>
-    <form @submit.prevent="onSubmit">
-        <input v-model="email" type="email" placeholder="email" required />
-        <input v-model="verifyCode" type="text" placeholder="verifyCode" required />
-        <button :disabled="auth.loading" @click="sendVerifyCode">Verify</button>
-        <input v-model="password" type="password" placeholder="password" required />
-        <button :disabled="auth.loading">注册</button>
-        <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
-    </form>
+  <div class="flex justify-center items-center min-h-[70vh]">
+    <div class="card w-96 bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title text-center">注册</h2>
+        <form @submit.prevent="onSubmit">
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">邮箱</span>
+            </label>
+            <div class="join w-full">
+              <input v-model="email" type="email" placeholder="email" required class="input input-bordered join-item w-full" />
+            </div>
+          </div>
+          
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">验证码</span>
+            </label>
+            <div class="join w-full">
+              <input v-model="verifyCode" type="text" placeholder="验证码" required class="input input-bordered join-item w-2/3" />
+              <button type="button" :disabled="auth.loading || countdown > 0" @click="sendVerifyCode" class="btn join-item w-1/3">
+                {{ countdown > 0 ? `${countdown}s` : '发送' }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">密码</span>
+            </label>
+            <input v-model="password" type="password" placeholder="密码" required class="input input-bordered" />
+          </div>
+          
+          <div class="form-control mt-6">
+            <button :disabled="auth.loading" class="btn btn-primary">注册</button>
+          </div>
+          
+          <div v-if="errorMessage" class="alert alert-error mt-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span>{{ errorMessage }}</span>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
