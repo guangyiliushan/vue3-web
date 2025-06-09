@@ -10,6 +10,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@iconify/vue": "^5.0.0",
     "@mdit/plugin-attrs": "^0.22.0",
     "@mdit/plugin-katex": "^0.18.0",
     "@tailwindcss/vite": "^4.1.8",

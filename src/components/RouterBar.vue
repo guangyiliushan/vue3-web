@@ -28,6 +28,9 @@
             </ul>
           </details>
         </li>
+        <li>
+          <RouterLink to="/portal">Portal</RouterLink>
+        </li>
       </ul>
     </div>
 
