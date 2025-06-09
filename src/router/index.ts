@@ -1,4 +1,4 @@
-import { createWebHistory, createRouter } from 'vue-router'
+import { createWebHashHistory, createRouter } from 'vue-router'
 
 import HomeView from '@/views/Home.vue'
 import AboutView from '@/views/About.vue'
@@ -6,6 +6,12 @@ import DashboardView from '@/views/Dashboard.vue'
 import LoginView from '@/views/Login.vue'
 import RegisterView from '@/views/Register.vue'
 import UserView from '@/views/User.vue'
+import ChangePasswordView from '@/views/ChangeUserInfo.vue'
+import ChangeEmailView from '@/views/ChangeUserInfo.vue'
+import BlogDiscoverView from '@/views/BlogDiscover.vue'
+import BlogTimeline from '@/views/BlogTimeline.vue'
+import BlogView from '@/views/BlogPost.vue'
+import PortalView from '@/views/Portal.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: HomeView },
@@ -14,10 +20,16 @@ const routes = [
   { path: '/login', name: 'Login', component: LoginView },
   { path: '/register', name: 'Register', component: RegisterView },
   { path: '/user/:id', name: 'User', component: UserView },
+  { path: '/user/change/password', name: 'ChangePassword', component: ChangePasswordView },
+  { path: '/user/change/email', name: 'ChangeEmail', component: ChangeEmailView },
+  { path: '/blog/discover', name: 'BlogDiscover', component: BlogDiscoverView },
+  { path: '/blog/timeline', name: 'BlogTimeline', component: BlogTimeline },
+  { path: '/blog/:id', name: 'BlogPost', component: BlogView },
+  { path: '/portal', name: 'Portal', component: PortalView }
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes,
 })
 
